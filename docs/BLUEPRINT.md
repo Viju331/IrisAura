@@ -161,8 +161,8 @@ The detailed symbol (glowing ribbons, iris texture) is unreadable below about 48
 | App icon `.ico` | 16, 20, 24, 32, 40, 48 (simplified mark); 64, 256 (full symbol, cropped square) | simplified mark + logo | EXEs, shortcuts, Add/Remove Programs (`ARPPRODUCTICON`) |
 | Tray icon `.ico` | 16, 20, 24, 32 | white bracket-person only (monochrome) | Island tray icon (Windows tray icons should be simple and monochrome) |
 | Sparse package logos | `Square44x44Logo` (+ `targetsize-16/24/32/48/256`), `Square150x150Logo`, `StoreLogo` 50×50 | simplified mark | `packaging/IslandIdentity/AppxManifest.xml` (identity packages still need these) |
-| WiX banner | 493×58 BMP | wordmark (text only, left-aligned) on `Aura.Void` | `WixUIBannerBmp` |
-| WiX dialog | 493×312 BMP | symbol on the left 164 px, black | `WixUIDialogBmp` |
+| WiX banner | 493×58 BMP | **Deferred to Phase 9** (ADR 0003): the default WiX UI draws black text over this bitmap, which conflicts with the dark-only logo rule. Design it together with the installer UI. | `WixUIBannerBmp` |
+| WiX dialog | 493×312 BMP | **Deferred to Phase 9** (same reason) | `WixUIDialogBmp` |
 | Splash / About art | 512×512 PNG (+ @2x) | symbol | Settings → About, Face Lab welcome screen |
 | README header | 1280×640 PNG | wordmark | GitHub/README, client documents |
 
@@ -375,7 +375,7 @@ Before any implementation beyond a mock tile, produce a written design for local
 - `NAudio` (CoreAudio volume and peak meters; WASAPI loopback)
 - `CommunityToolkit.Mvvm`
 - `System.Management` (WMI brightness events)
-- `xunit`, `FluentAssertions`, `NSubstitute`
+- `xunit.v3` (on Microsoft.Testing.Platform, opted in via `global.json`; no `Microsoft.NET.Test.Sdk` or `xunit.runner.visualstudio` needed — ADR 0002), `FluentAssertions` 7.x, `NSubstitute`
 - `Microsoft.Windows.CsWin32` (MIT; build-time source generator for Win32 P/Invoke such as `SetWinEventHook`, `SHQueryUserNotificationState`, `RegisterHotKey`; private asset, nothing redistributed)
 - `System.CommandLine` (MIT; argument parsing for `irisaura-island.exe` and `IrisAura.Tools`; pin a stable 2.x release ⚠ VERIFY current stable version)
 - **`netstandard2.0` targets only** (`IrisAura.Contracts`, `IrisAura.Island.Sdk`): `System.Text.Json` (JSON is not built into netstandard2.0) and `System.Security.Principal.Windows` (current user SID for the SDK pipe name). .NET 10 projects use the in-box versions and must not reference these packages.
@@ -437,12 +437,16 @@ flowchart LR
 
 ```
 IrisAura/
-├─ IrisAura.sln
+├─ IrisAura.sln                           # all projects (C# + native); open in Visual Studio
+├─ IrisAura.Managed.slnf                  # C#-only solution filter for the dotnet CLI
 ├─ CLAUDE.md                              # rules for Claude Code (see §17)
+├─ global.json                            # pinned .NET SDK + Microsoft.Testing.Platform runner
+├─ nuget.config                           # nuget.org only, with package source mapping
 ├─ Directory.Build.props                  # C# defaults (see note below); C++ projects use their own .props
 ├─ Directory.Packages.props               # central package management: every NuGet version pinned here
 ├─ native/
-│  └─ IrisAura.Face.CredentialProvider/   # C++ vcxproj (x64, ARM64)
+│  ├─ IrisAura.Native.props               # shared C++ settings, imported after Microsoft.Cpp.props
+│  └─ IrisAura.Face.CredentialProvider/   # C++ vcxproj (x64, ARM64); inert until Phase 0C
 │     ├─ dllmain.cpp, guid.h, ClassFactory.cpp
 │     ├─ Provider.cpp/.h                  # ICredentialProvider, ICredentialProviderSetUserArray
 │     ├─ Credential.cpp/.h                # ICredentialProviderCredential2
@@ -492,13 +496,15 @@ IrisAura/
 │  ├─ IrisAura.Face.Core.Tests/  IrisAura.Face.Vision.Tests/  IrisAura.Face.Security.Tests/
 │  ├─ IrisAura.Island.Tests/              # arbiter, springs, timeline interpolation
 │  └─ datasets/ (gitignored)
-├─ assets/brand/                          # irisaura-logo.png, irisaura-wordmark.png, generated icons (§0.6)
+├─ assets/brand/                          # irisaura-logo.png, irisaura-wordmark.png; source/ SVGs; generated/ (git-ignored, §0.6)
 ├─ docs/ BLUEPRINT.md THREAT_MODEL.md RECOVERY.md PRIVACY.md HARDWARE_MATRIX.md ISLAND_SDK.md DECISIONS/
-└─ scripts/ build-brand-assets.ps1 new-dev-cert.ps1 vm-deploy.ps1 cp-register.ps1 cp-disable.ps1 collect-logs.ps1
+└─ scripts/ build.ps1 generate-dependency-inventory.ps1 build-brand-assets.ps1 new-dev-cert.ps1
+           vm-deploy.ps1 cp-register.ps1 cp-disable.ps1 (Phase 0C) collect-logs.ps1 (Phase 9)
 ```
 
 **Build configuration rules:**
-- `Directory.Build.props` is also imported by `.vcxproj` files, so wrap its C# settings in `Condition="'$(MSBuildProjectExtension)' == '.csproj'"`. C++ settings (C++20, `/W4`, warnings as errors, x64 + ARM64) go in `native/Directory.Build.props`.
+- `Directory.Build.props` is also imported by `.vcxproj` files, so wrap its C# settings in `Condition="'$(MSBuildProjectExtension)' == '.csproj'"`. C++ settings (C++20, `/W4`, warnings as errors, static CRT, CFG/CET, x64 + ARM64) go in `native/IrisAura.Native.props`, imported by each `.vcxproj` **after** `Microsoft.Cpp.props`; a `Directory.Build.props` would be evaluated before the C++ defaults and be overridden (ADR 0002).
+- The dotnet CLI cannot load `.vcxproj` files, so CLI builds use `IrisAura.Managed.slnf`; `scripts/build.ps1` builds the native project with Visual Studio's MSBuild when MSVC is installed.
 - C# defaults: `TargetFramework` `net10.0-windows10.0.19041.0`, `LangVersion` 14, `Nullable` enable, `TreatWarningsAsErrors` true.
 - `IrisAura.Contracts` and `IrisAura.Island.Sdk` override `TargetFramework` to `netstandard2.0`, so .NET Framework apps can use the SDK. They contain no Windows Runtime or WPF code. Keep their language features compatible with netstandard2.0 (no default interface members; `init`/`required` need polyfill attributes defined in the project).
 - **Release 1 dependency rule:** `IrisAura.Island*` projects may reference only `IrisAura.Contracts` and `IrisAura.Theme`, never an `IrisAura.Face.*` project. `FaceEventsProvider` talks to the Face Events pipe through `IrisAura.Contracts` DTOs and stays dormant if the pipe does not exist. Add a build/test check that enforces this rule.

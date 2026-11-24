@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Template protection, pipe ACLs, signature checks (BLUEPRINT §7.6, §9.1). Implemented in Phase 6. -->
+  <PropertyGroup>
+    <RootNamespace>IrisAura.Face.Security</RootNamespace>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- xunit v3 test projects are executables. -->
+    <OutputType>Exe</OutputType>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>IrisAura.Island.Tests</RootNamespace>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- xunit.v3 runs on Microsoft.Testing.Platform (opted in via global.json); no VSTest packages needed. -->
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="FluentAssertions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\IrisAura.Contracts\IrisAura.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\IrisAura.Theme\IrisAura.Theme.csproj" />
+    <ProjectReference Include="..\..\src\IrisAura.Island\IrisAura.Island.csproj" />
+    <ProjectReference Include="..\..\src\IrisAura.Island.Providers\IrisAura.Island.Providers.csproj" />
+    <ProjectReference Include="..\..\src\IrisAura.Island.Sdk\IrisAura.Island.Sdk.csproj" />
+    <ProjectReference Include="..\..\src\IrisAura.Island.Cli\IrisAura.Island.Cli.csproj" />
+  </ItemGroup>
+</Project>

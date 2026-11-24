@@ -1,0 +1,26 @@
+<Project>
+  <!-- MSBuild also imports this file for .vcxproj projects, so every C# setting is conditioned
+       on the project extension. C++ settings live in native/Directory.Build.props (BLUEPRINT §6). -->
+  <PropertyGroup Condition="'$(MSBuildProjectExtension)' == '.csproj'">
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <LangVersion>14</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Missing XML doc comments are not errors in skeleton phases. -->
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <Deterministic>true</Deterministic>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <!-- CI sets ContinuousIntegrationBuild=true so restore fails if a lock file is out of date. -->
+    <RestoreLockedMode Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</RestoreLockedMode>
+
+    <Product>IrisAura</Product>
+    <Company>IrisAura</Company>
+    <Copyright>Copyright (c) 2026 Viju331. All rights reserved.</Copyright>
+    <NeutralLanguage>en</NeutralLanguage>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+</Project>

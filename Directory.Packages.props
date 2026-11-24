@@ -1,0 +1,42 @@
+<Project>
+  <!-- Central package management: every NuGet version used by the solution is pinned here.
+       Only packages approved in BLUEPRINT §4 may be listed. Versions were checked on nuget.org
+       on 24 Nov 2026. Run scripts/generate-dependency-inventory.ps1 after any change. -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup Label="Tests">
+    <!-- xunit.v3 runs on Microsoft.Testing.Platform (global.json "test.runner"); the VSTest packages
+         Microsoft.NET.Test.Sdk and xunit.runner.visualstudio are deliberately not used. -->
+    <PackageVersion Include="xunit.v3" Version="4.0.3" />
+    <!-- Stay on 7.x: FluentAssertions 8+ uses a commercial licence (BLUEPRINT §4). -->
+    <PackageVersion Include="FluentAssertions" Version="7.2.2" />
+    <PackageVersion Include="NSubstitute" Version="5.3.0" />
+  </ItemGroup>
+
+  <!-- Approved for later phases (BLUEPRINT §4). Pinned now so versions are decided once; they are
+       only restored when a project actually references them. Stay on the .NET 10 (LTS) line for
+       Microsoft.Extensions.* and System.* packages. -->
+  <ItemGroup Label="Island (Phases 1-5)">
+    <PackageVersion Include="NAudio" Version="3.3.0" />
+    <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageVersion Include="System.Management" Version="10.0.15" />
+    <PackageVersion Include="Microsoft.Windows.CsWin32" Version="0.3.371" />
+    <PackageVersion Include="System.CommandLine" Version="2.0.15" />
+    <PackageVersion Include="Serilog" Version="4.4.0" />
+    <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="netstandard2.0 targets only (Contracts, Island.Sdk)">
+    <PackageVersion Include="System.Text.Json" Version="10.0.15" />
+    <PackageVersion Include="System.Security.Principal.Windows" Version="5.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Face (Phases 6+)">
+    <PackageVersion Include="Microsoft.ML.OnnxRuntime" Version="1.32.0" />
+    <PackageVersion Include="OpenCvSharp4" Version="4.13.0.20261107" />
+    <PackageVersion Include="OpenCvSharp4.runtime.win" Version="4.13.0.20261107" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.WindowsServices" Version="10.0.15" />
+  </ItemGroup>
+</Project>

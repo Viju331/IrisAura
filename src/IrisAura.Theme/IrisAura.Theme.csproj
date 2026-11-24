@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Shared WPF brand resources (BLUEPRINT §0.4, §0.5). Referenced by IrisAura.Island and
+       IrisAura.Face.Lab; must not reference any other IrisAura project. -->
+  <PropertyGroup>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>IrisAura.Theme</RootNamespace>
+  </PropertyGroup>
+</Project>

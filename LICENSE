@@ -1,0 +1,30 @@
+IrisAura — Proprietary Licence
+
+Copyright (c) 2026 Viju331. All rights reserved.
+
+This repository and everything in it (source code, documentation, designs,
+logos, images and other assets) are the confidential and proprietary property
+of the copyright holder.
+
+The repository may be publicly viewable. Being able to view it does NOT grant
+you any licence. Without prior written permission from the copyright holder,
+you may not:
+
+  1. copy, modify, merge, publish, distribute, sublicense or sell any part of it;
+  2. use any part of it, in source or compiled form, in another product or service;
+  3. use the IrisAura name, logos or brand assets.
+
+Viewing the source on GitHub, and forking it on GitHub solely as permitted by
+the GitHub Terms of Service, is allowed. No other use is permitted.
+
+Third-party components included in or used by this project remain under their
+own licences. See THIRD_PARTY_NOTICES.md and models/LICENSES/.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT
+HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+For licensing enquiries, open an issue at https://github.com/Viju331/IrisAura.

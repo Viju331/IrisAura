@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Shared, versioned DTOs and protocol constants. netstandard2.0 so IrisAura.Island.Sdk
+       (and .NET Framework callers) can use it. No Windows Runtime or WPF code here. -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>IrisAura.Contracts</RootNamespace>
+  </PropertyGroup>
+</Project>

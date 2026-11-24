@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Standalone IrisAura Island (Release 1). May reference only IrisAura.Contracts and
+       IrisAura.Theme, never IrisAura.Face.* (BLUEPRINT §6; enforced by ArchitectureTests). -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>IrisAura.Island</AssemblyName>
+    <RootNamespace>IrisAura.Island</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\IrisAura.Contracts\IrisAura.Contracts.csproj" />
+    <ProjectReference Include="..\IrisAura.Theme\IrisAura.Theme.csproj" />
+    <ProjectReference Include="..\IrisAura.Island.Providers\IrisAura.Island.Providers.csproj" />
+  </ItemGroup>
+</Project>
