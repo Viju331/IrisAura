@@ -1,0 +1,48 @@
+# Build output
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+ARM64/
+[Aa]rtifacts/
+*.user
+*.suo
+.vs/
+*.ipch
+*.pdb
+*.ilk
+*.obj
+*.tlog
+*.aps
+
+# Test results / coverage
+TestResults/
+coverage*/
+*.trx
+
+# NuGet
+*.nupkg
+packages/
+
+# Biometric datasets: never commit (BLUEPRINT §6, §9.3)
+tests/datasets/
+
+# Generated brand assets are re-created by scripts/build-brand-assets.ps1 (BLUEPRINT §0.6)
+assets/brand/generated/
+
+# Signing material: never commit
+*.pfx
+*.p12
+*.snk
+*.cer
+
+# Logs and local settings
+*.log
+logs/
+.claude/settings.local.json
+
+# OS / editor
+Thumbs.db
+desktop.ini
+.DS_Store
