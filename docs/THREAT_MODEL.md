@@ -39,3 +39,5 @@ mitigated and how the mitigation is tested. Status: ⏳ planned · 🔨 implemen
 | T-12 | Model file tampering / licence violation | 4 | SHA-256 in `models/SHA256SUMS`, licences in `models/LICENSES/`, CI hash check | Phase 6 | ⏳ |
 | T-13 | DLL hijack / tampering of installed files | — | Install to `%ProgramFiles%`, sign everything, `SetDefaultDllDirectories` | Phase 9 | ⏳ |
 | T-14 | AV/EDR quarantine | — | Signing, no packers, no input injection | Phase 9 | ⏳ |
+| T-15 | Another same-user process signals the Island's `Local\` quit / show-debug events | 1 | Accepted: same trust level as the user; worst case the Island quits or shows its debug panel. Revisit if the debug panel ever exposes sensitive data | Phase 1 review | ✅ accepted |
+| T-16 | Island steals focus while the user types (credentials typed into the wrong window) | 1 | `WS_EX_NOACTIVATE`, `MA_NOACTIVATE`, `ShowActivated=False`; foreground only via the user's own hotkey | Self-test "no focus taken" (9/9) | ✅ automated, ⏳ manual |

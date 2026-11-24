@@ -16,9 +16,25 @@ IrisAura is a Windows desktop product with two parts:
 
 ## Project status
 
-**Phase 0A — repository and development environment.** No user-facing features yet.
-Progress is tracked in [docs/PROGRESS.md](docs/PROGRESS.md); the full plan is in
-[docs/BLUEPRINT.md](docs/BLUEPRINT.md).
+**Phase 1 — IrisAura Island shell and motion.** The Island window, animation, click-through,
+placement, full-screen hiding and keyboard access work with *fake* activities; real media,
+system events and the SDK come in Phases 2–5. Progress and test evidence are in
+[docs/PROGRESS.md](docs/PROGRESS.md); the full plan is in [docs/BLUEPRINT.md](docs/BLUEPRINT.md).
+
+### Trying the Island (development build)
+
+```powershell
+dotnet build src/IrisAura.Island -c Release
+src/IrisAura.Island/bin/Release/net10.0-windows10.0.19041.0/IrisAura.Island.exe --debug
+```
+
+| Command | What it does |
+|---|---|
+| `IrisAura.Island.exe --debug` | Starts the Island with the debug panel (fake media, timer, split, banner, options, live stats) |
+| `IrisAura.Island.exe --quit` | Closes the running Island |
+| `IrisAura.Island.exe --selftest report.json` | Runs the integration self-test (focus, click-through, placement, full screen, CPU, frames) and writes a report |
+
+Hover the pill to expand it, click to pin it, press **Ctrl+Alt+Shift+I** to control it from the keyboard (Esc to return).
 
 ## Honest limits
 

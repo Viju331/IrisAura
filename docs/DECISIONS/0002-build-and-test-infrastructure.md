@@ -28,7 +28,10 @@ dependencies, and tests. Facts found while setting it up:
 - Root `Directory.Build.props` applies only to `.csproj`. C++ settings live in
   `native/IrisAura.Native.props`, imported by each `.vcxproj` right after `Microsoft.Cpp.props`.
   Static CRT, `/W4 /WX`, C++20, CFG and CET (x64) are set there.
-- `global.json` pins SDK 10.0.401 (latest patch roll-forward) and selects Microsoft.Testing.Platform.
+- `global.json` selects a .NET 10 SDK and Microsoft.Testing.Platform. Originally pinned to 10.0.401
+  (latest patch); **amended 2026-11-24 (Phase 1):** installing Visual Studio 2026 removed 10.0.401 and
+  added the .NET 11 SDK, so `global.json` now requires ≥ 10.0.300 with `latestFeature` roll-forward —
+  the newest installed 10.0.x SDK, never .NET 11 (KNOWN_ISSUES KI-016).
   Tests use `xunit.v3`; `Microsoft.NET.Test.Sdk` and `xunit.runner.visualstudio` are not needed.
 - Central package management (`Directory.Packages.props`) pins every approved package; lock files
   are on; `build.ps1 -Locked` restores in locked mode.

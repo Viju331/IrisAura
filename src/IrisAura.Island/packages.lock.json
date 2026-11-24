@@ -5,14 +5,10 @@
       "irisaura.contracts": {
         "type": "Project"
       },
-      "irisaura.face.core": {
-        "type": "Project"
-      },
       "irisaura.island.providers": {
         "type": "Project",
         "dependencies": {
-          "IrisAura.Contracts": "[1.0.0, )",
-          "IrisAura.Face.Core": "[1.0.0, )"
+          "IrisAura.Contracts": "[1.0.0, )"
         }
       },
       "irisaura.theme": {

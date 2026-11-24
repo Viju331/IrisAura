@@ -4,7 +4,7 @@
 
 ## Toolchain
 
-- .NET SDK: `10.0.401` (pinned in `global.json`, roll forward: latest patch)
+- .NET SDK: `10.0.300` (roll forward: latestFeature); in use: `10.0.302` (`global.json`)
 - Native: MSVC via Visual Studio (`$(DefaultPlatformToolset)`), C++20, latest installed Windows SDK
 - NuGet source: nuget.org only (`nuget.config`, package source mapping)
 

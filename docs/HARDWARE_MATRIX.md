@@ -31,4 +31,8 @@ numbers, user names or any biometric data.
 
 | Date | Device | Windows build | DPI / monitors | Test | Result | Notes / evidence |
 |---|---|---|---|---|---|---|
-| | | | | | | |
+| 2026-11-24 | DEV-01 | 26300 | 1 × 1920×1080 @ 100 %, taskbar bottom | Phase 1 self-test (Release, JIT) | 31 pass / 10 fail / 2 inconclusive | Fails: startup 802 ms (target 800), 1–4 dropped frames per transition. Machine load 14–27 % from other apps. `docs/evidence/phase-1-selftest-2026-11-24.json` |
+| 2026-11-24 | DEV-01 | 26300 | same | Focus theft (automated) | Pass | Foreground unchanged across 9 transitions |
+| 2026-11-24 | DEV-01 | 26300 | same | Click-through (WindowFromPoint) | Pass | Alpha-0 pixels pass clicks without `WS_EX_TRANSPARENT`; shadow pixels need the toggle |
+| 2026-11-24 | DEV-01 | 26300 | same | Full screen (borderless covering window) | Pass (run 1), inconclusive later | Later runs: Windows withheld foreground from the probe window |
+| | | | 2+ monitors, mixed DPI | Placement, display change, follow cursor | ⏳ | Owner hardware needed (KI-013) |

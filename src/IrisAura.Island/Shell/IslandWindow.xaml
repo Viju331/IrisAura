@@ -1,0 +1,63 @@
+<!--
+  IrisAura Island shell window (BLUEPRINT §8.3). Created once at the largest size; only the pill
+  inside animates. Transparent layered window: pixels with alpha 0 are click-through; the
+  WS_EX_TRANSPARENT toggle in code covers the shadow. Never activates (WS_EX_NOACTIVATE) except in
+  keyboard focus mode.
+-->
+<Window x:Class="IrisAura.Island.Shell.IslandWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:IrisAura.Island.Views.Controls"
+        Title="IrisAura Island"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ShowActivated="False"
+        ResizeMode="NoResize"
+        SizeToContent="Manual"
+        FontFamily="{StaticResource Aura.Font.UI}"
+        Foreground="{StaticResource Aura.Frost}"
+        KeyboardNavigation.TabNavigation="Cycle"
+        KeyboardNavigation.DirectionalNavigation="Cycle">
+  <Window.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/IrisAura.Island;component/Views/ActivityTemplates.xaml" />
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </Window.Resources>
+
+  <Canvas x:Name="Stage">
+    <!-- Cheap vector shadows (no blur effect; see PillShadow). -->
+    <controls:PillShadow x:Name="PillShadow" />
+    <controls:PillShadow x:Name="BubbleShadow" Visibility="Collapsed" />
+
+    <!-- Pill shape. Content is drawn by PillContent on top, clipped to the same shape. -->
+    <controls:IslandPill x:Name="Pill"
+                         Background="{StaticResource Aura.Void}"
+                         BorderThickness="1.5"
+                         BorderBrush="Transparent"
+                         Focusable="True"
+                         FocusVisualStyle="{x:Null}"
+                         AutomationProperties.Name="IrisAura Island"
+                         AutomationProperties.LiveSetting="Polite">
+    </controls:IslandPill>
+
+    <Grid x:Name="PillContent" Background="Transparent">
+      <Grid.Clip>
+        <RectangleGeometry x:Name="PillClip" />
+      </Grid.Clip>
+      <ContentPresenter x:Name="ContentA" HorizontalAlignment="Center" VerticalAlignment="Top" />
+      <ContentPresenter x:Name="ContentB" HorizontalAlignment="Center" VerticalAlignment="Top" />
+    </Grid>
+
+    <!-- Split bubble (BLUEPRINT §8.2 Split). -->
+    <Border x:Name="Bubble" Background="{StaticResource Aura.Void}" Visibility="Collapsed"
+            AutomationProperties.Name="Second activity">
+
+      <ContentPresenter x:Name="BubbleContent" HorizontalAlignment="Center" VerticalAlignment="Center" />
+    </Border>
+  </Canvas>
+</Window>

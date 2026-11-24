@@ -16,7 +16,8 @@ $outFile = Join-Path $root 'docs\DEPENDENCIES.md'
 
 Push-Location $root
 try {
-    $sdk = (Get-Content global.json -Raw | ConvertFrom-Json).sdk.version
+    $sdkConfig = (Get-Content global.json -Raw | ConvertFrom-Json).sdk
+    $sdk = "$($sdkConfig.version)`` (roll forward: $($sdkConfig.rollForward)); in use: ``$(dotnet --version)"
     $json = dotnet list IrisAura.sln package --include-transitive --format json 2>$null
     if ($LASTEXITCODE -ne 0) {
         # The full solution includes a .vcxproj the dotnet CLI cannot load without Visual Studio;
@@ -39,7 +40,7 @@ try {
     $lines.Add('')
     $lines.Add('## Toolchain')
     $lines.Add('')
-    $lines.Add("- .NET SDK: ``$sdk`` (pinned in ``global.json``, roll forward: latest patch)")
+    $lines.Add("- .NET SDK: ``$sdk`` (``global.json``)")
     $lines.Add('- Native: MSVC via Visual Studio (`$(DefaultPlatformToolset)`), C++20, latest installed Windows SDK')
     $lines.Add('- NuGet source: nuget.org only (`nuget.config`, package source mapping)')
     $lines.Add('')
