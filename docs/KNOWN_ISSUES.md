@@ -5,7 +5,8 @@ Open issues, limitations and unverified assumptions. Close an item by linking th
 
 | ID | Area | Issue | Impact | Next step / owner | Status |
 |---|---|---|---|---|---|
-| KI-001 | Build | Native project not yet compiled: Visual Studio C++ tools and Windows SDK not installed on the dev machine. The `.vcxproj` is unverified. | Phase 0A acceptance incomplete | Install VS C++ workload + ARM64 tools; run `scripts/build.ps1` | Open |
+| KI-001 | Build | Native project not yet compiled (no VS C++ tools). | Phase 0A acceptance | x64 build verified 2026-11-24 (PROGRESS Phase 0A) | Closed |
+| KI-010 | Build | MSVC **ARM64** build tools not installed on the dev machine; ARM64 native build is skipped. | ARM64 LogonUI needs a native ARM64 DLL (BLUEPRINT §3.1) | Add the ARM64 build tools component before Phase 0C; run `scripts/build.ps1` | Open |
 | KI-002 | Environment | Dev machine is Windows 11 **Home**: no Hyper-V for the disposable VM. | Blocks Phase 0C VM work | Use VMware Workstation Pro / VirtualBox, or upgrade to Pro ([VM_SETUP.md](VM_SETUP.md)) | Open |
 | KI-003 | Brand | Simplified icon mark and tray mark are **drafts**; the full-colour mark is muddy at 16 px. | Release icons | Owner approval; consider a hand-tuned 16 px variant from a designer | Open |
 | KI-004 | Brand | `build-brand-assets.ps1` not yet run (ImageMagick not installed); SVG rendering quality in ImageMagick's built-in renderer is unverified. ⚠ VERIFY | Icon quality | Install ImageMagick 7, run, inspect outputs | Open |

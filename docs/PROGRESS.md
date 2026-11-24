@@ -9,7 +9,7 @@ Status legend: ✅ done with evidence · ⏳ pending (owner noted) · ❌ failed
 
 ## Phase 0A — Repository and development environment
 
-**Branch:** `phase-0a` · **Started:** 2026-11-24 · **Status:** ⏳ in progress — C# part complete; native build, VM and tooling wait on installs by the owner.
+**Branch:** `phase-0a` (merged to `main` 2026-11-24) · **Started:** 2026-11-24 · **Status:** ⏳ build criteria met; VM recovery drill, brand assets and owner actions still open.
 
 ### Scope delivered
 
@@ -27,7 +27,8 @@ Status legend: ✅ done with evidence · ⏳ pending (owner noted) · ❌ failed
 | Criterion (BLUEPRINT §10 Phase 0A) | Status | Evidence |
 |---|---|---|
 | Clean clone builds (C#) | ✅ | Fresh `git clone` of `phase-0a` into an empty folder, then `scripts/build.ps1 -Locked`: build 0 warnings / 0 errors, 34/34 tests passed (2026-11-24, .NET SDK 10.0.401, Windows 11 build 26300). |
-| x64 native project builds | ⏳ owner | Visual Studio C++ tools and Windows SDK are not installed on the dev machine. `build.ps1` detects this and reports `SKIPPED (MSVC not installed)`. Re-run after installing (see "Owner actions"). |
+| x64 native project builds | ✅ | `scripts/build.ps1` (Release) with Visual Studio Community 2026, MSVC 14.51.36231, Windows SDK 10.0.26100.0: C# build 0 warnings, 34/34 tests, native x64 passed (/W4 /WX) (2026-11-24). `dumpbin` on the DLL: exports only `DllCanUnloadNow` and `DllGetClassObject` (no `DllRegisterServer`); depends only on `KERNEL32.dll` (static CRT); Control Flow Guard, CET compatible, ASLR (high entropy) and NX enabled. |
+| ARM64 native build (not a 0A criterion; needed from Phase 0C) | ⏳ owner | MSVC ARM64 build tools not installed, so `$(DefaultPlatformToolset)` is undefined for ARM64 (MSB8003). `build.ps1` reports the skip. KNOWN_ISSUES KI-010. |
 | VM checkpoint/recovery demonstrated | ⏳ owner | Dev machine runs Windows 11 Home (no Hyper-V). Options and steps in [VM_SETUP.md](VM_SETUP.md). |
 | Dependency inventory generated | ✅ | [DEPENDENCIES.md](DEPENDENCIES.md) via `scripts/generate-dependency-inventory.ps1` (22 package entries). |
 | Model versions, hashes, licences pinned | ➖ | No models yet (Phase 6). `models/SHA256SUMS` and `models/LICENSES/` are in place. |
@@ -35,7 +36,7 @@ Status legend: ✅ done with evidence · ⏳ pending (owner noted) · ❌ failed
 
 ### Owner actions to finish Phase 0A
 
-1. Install **Visual Studio 2026** (Community is fine for this stage) with *Desktop development with C++*, plus the individual components **MSVC ARM64 build tools** and a **Windows 11 SDK**. Then run `./scripts/build.ps1` and record the native result here.
+1. ~~Install Visual Studio C++ tools~~ ✅ done (x64). Still to add: Visual Studio Installer → Modify → Individual components → **MSVC ARM64/ARM64EC build tools (latest)**, then re-run `./scripts/build.ps1`.
 2. Install **ImageMagick 7**, run `./scripts/build-brand-assets.ps1`, and review the generated icons at 100/150/200 % scaling.
 3. **Approve or change** the draft icon mark (`assets/brand/source/irisaura-mark.svg`) and tray mark.
 4. Set up a disposable Windows 11 VM with a checkpoint and a second admin account ([VM_SETUP.md](VM_SETUP.md)); restore the checkpoint once and record it here.

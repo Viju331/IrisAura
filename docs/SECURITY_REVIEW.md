@@ -26,7 +26,7 @@ named reviewer, a date and linked evidence. Independent review means someone oth
 - [x] Credential-provider project is inert: no COM classes, no `DllRegisterServer`, cannot be registered.
 - [x] No network, telemetry or logging code added.
 - [x] Biometric datasets path (`tests/datasets/`) ignored by git.
-- [ ] Native hardening flags (CFG, CET, /W4 /WX, static CRT) verified in a real build — pending KI-001.
+- [x] Native hardening verified in the x64 Release build (2026-11-24, `dumpbin`): Control Flow Guard, CET compatible, high-entropy ASLR, NX; static CRT (only `KERNEL32.dll` imported); /W4 /WX clean; exports limited to `DllCanUnloadNow`/`DllGetClassObject`. ARM64 pending KI-010.
 
 ## Findings
 
