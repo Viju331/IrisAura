@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- IrisAura Face Lab: in-session research app (enrolment, diagnostics). Built in Phase 6.
+       Never collects or stores a Windows password (BLUEPRINT §7.6). -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>IrisAura.Face.Lab</AssemblyName>
+    <RootNamespace>IrisAura.Face.Lab</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\IrisAura.Contracts\IrisAura.Contracts.csproj" />
+    <ProjectReference Include="..\IrisAura.Theme\IrisAura.Theme.csproj" />
+  </ItemGroup>
+</Project>

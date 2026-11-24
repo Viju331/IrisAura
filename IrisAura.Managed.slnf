@@ -1,0 +1,20 @@
+{
+    "solution":  {
+                     "path":  "IrisAura.sln",
+                     "projects":  [
+                                      "src\\IrisAura.Contracts\\IrisAura.Contracts.csproj",
+                                      "src\\IrisAura.Theme\\IrisAura.Theme.csproj",
+                                      "src\\IrisAura.Tools\\IrisAura.Tools.csproj",
+                                      "src\\IrisAura.Island\\IrisAura.Island.csproj",
+                                      "src\\IrisAura.Island.Providers\\IrisAura.Island.Providers.csproj",
+                                      "src\\IrisAura.Island.Sdk\\IrisAura.Island.Sdk.csproj",
+                                      "src\\IrisAura.Island.Cli\\IrisAura.Island.Cli.csproj",
+                                      "src\\IrisAura.Face.Lab\\IrisAura.Face.Lab.csproj",
+                                      "src\\IrisAura.Face.Core\\IrisAura.Face.Core.csproj",
+                                      "src\\IrisAura.Face.Vision\\IrisAura.Face.Vision.csproj",
+                                      "src\\IrisAura.Face.Camera\\IrisAura.Face.Camera.csproj",
+                                      "src\\IrisAura.Face.Security\\IrisAura.Face.Security.csproj",
+                                      "tests\\IrisAura.Island.Tests\\IrisAura.Island.Tests.csproj"
+                                  ]
+                 }
+}

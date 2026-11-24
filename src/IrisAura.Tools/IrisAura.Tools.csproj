@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Developer/diagnostic CLI: cameras, detect, bench, spoof-eval (BLUEPRINT §6).
+       cp-disable is added only in the conditional sign-in track. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>IrisAura.Tools</RootNamespace>
+  </PropertyGroup>
+</Project>

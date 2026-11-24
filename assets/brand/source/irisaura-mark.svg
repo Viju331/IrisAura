@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  IrisAura simplified icon mark — DRAFT for review (BLUEPRINT §0.6). Not approved for release.
+  Used for icon sizes 16-48 px, where the detailed logo symbol is unreadable.
+  Iris ring in the Aura gradient (Cyan → Blue → Violet, 135°) on Aura.Surface, with the
+  person-in-brackets glyph in Aura.Frost. Glyph path data matches IrisAura.Theme/Assets/Glyphs.xaml
+  (24-unit grid, scaled ×6 and centred).
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="auraRing" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#22C3F2"/>
+      <stop offset="0.5" stop-color="#4A92F2"/>
+      <stop offset="1" stop-color="#8A3FF2"/>
+    </linearGradient>
+  </defs>
+  <circle cx="128" cy="128" r="114" fill="#0B0D1A"/>
+  <circle cx="128" cy="128" r="108" fill="none" stroke="url(#auraRing)" stroke-width="22"/>
+  <g transform="translate(56 56) scale(6)" fill="none" stroke="#E2E6F4" stroke-width="1.9"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 2,8 V 5 A 3,3 0 0 1 5,2 H 8 M 16,2 H 19 A 3,3 0 0 1 22,5 V 8 M 22,16 V 19 A 3,3 0 0 1 19,22 H 16 M 8,22 H 5 A 3,3 0 0 1 2,19 V 16"/>
+    <path d="M 12,6.5 A 3,3 0 1 1 12,12.5 A 3,3 0 1 1 12,6.5 Z M 6.5,19 C 6.5,15.8 9,14 12,14 C 15,14 17.5,15.8 17.5,19"/>
+  </g>
+</svg>

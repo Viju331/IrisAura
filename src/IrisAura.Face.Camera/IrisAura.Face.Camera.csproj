@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- ICameraSource and IR/RGB discovery (BLUEPRINT §7.1). Implemented in Phase 0B/6. -->
+  <PropertyGroup>
+    <RootNamespace>IrisAura.Face.Camera</RootNamespace>
+  </PropertyGroup>
+</Project>

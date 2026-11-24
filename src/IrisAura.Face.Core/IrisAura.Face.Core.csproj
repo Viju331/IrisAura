@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Lab matching, evaluation and policies (BLUEPRINT §7.3). Implemented in Phase 6. -->
+  <PropertyGroup>
+    <RootNamespace>IrisAura.Face.Core</RootNamespace>
+  </PropertyGroup>
+</Project>

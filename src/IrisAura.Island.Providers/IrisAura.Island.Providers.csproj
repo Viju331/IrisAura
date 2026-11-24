@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- One class per activity source (BLUEPRINT §8.6). Filled in Phases 3-5.
+       May reference only IrisAura.Contracts (never IrisAura.Face.*). -->
+  <PropertyGroup>
+    <RootNamespace>IrisAura.Island.Providers</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\IrisAura.Contracts\IrisAura.Contracts.csproj" />
+  </ItemGroup>
+</Project>

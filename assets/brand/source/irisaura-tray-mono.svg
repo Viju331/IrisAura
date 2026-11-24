@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  IrisAura tray icon — DRAFT for review (BLUEPRINT §0.6). Monochrome white person-in-brackets on a
+  transparent background, as Windows tray icons should be simple and monochrome.
+  Path data matches IrisAura.Theme/Assets/Glyphs.xaml (24-unit grid).
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <g fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 2,8 V 5 A 3,3 0 0 1 5,2 H 8 M 16,2 H 19 A 3,3 0 0 1 22,5 V 8 M 22,16 V 19 A 3,3 0 0 1 19,22 H 16 M 8,22 H 5 A 3,3 0 0 1 2,19 V 16"/>
+    <path d="M 12,6.5 A 3,3 0 1 1 12,12.5 A 3,3 0 1 1 12,6.5 Z M 6.5,19 C 6.5,15.8 9,14 12,14 C 15,14 17.5,15.8 17.5,19"/>
+  </g>
+</svg>
