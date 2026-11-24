@@ -821,10 +821,18 @@ public sealed record IslandActivity(
 4. **User override:** clicking the bubble swaps it with the main pill. The swap is remembered until either activity ends.
 5. **"Do not disturb":** when `SHQueryUserNotificationState` returns `QUNS_QUIET_TIME`, or the user turns on IrisAura Island quiet mode, suppress notification banners only.
 
+**Implementation notes (Phase 2, ADR 0005):**
+- Persistent ties: the activity that started first wins, then ordinal id (no flapping). Transient ties: newest first.
+- Activity ids are owned by the provider that started them; duplicates from the same provider replace content; sequenced stale updates and updates after end are ignored.
+- Transients expire their TTL after the last update; persistent activities after start.
+- The user preference (swap/cycle) is also cleared when a more important persistent activity starts.
+- `Navigation` (no row above) defaults to priority 55.
+- A crashed provider is disabled, its activities removed, and it can be restarted (§8.9).
+
 **Gestures:**
 - Hover → expand.
 - Click → open the app, or pin it if it's already expanded.
-- Right-click → context menu (Settings, Start timer, Quiet mode, Hide for 1 hour, Quit).
+- Right-click → context menu (Settings, Start timer, Quiet mode, Hide for 1 hour, Quit). The same menu is on the notification-area (tray) icon, so it is reachable when the pill is idle (click-through) or hidden; `Ctrl+Alt+Shift+I` also shows a hidden Island.
 - Mouse wheel over the compact pill → cycle between activities. Setting: wheel over the media activity changes volume instead.
 - Middle-click → play/pause media.
 - Drag files onto the Island → **file shelf** (optional §8.6.12).

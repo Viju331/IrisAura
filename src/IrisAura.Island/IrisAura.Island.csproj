@@ -12,6 +12,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Logging to %LocalAppData%\IrisAura\logs (BLUEPRINT §4). Approved; versions in Directory.Packages.props. -->
+    <PackageReference Include="Serilog" />
+    <PackageReference Include="Serilog.Sinks.File" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\IrisAura.Contracts\IrisAura.Contracts.csproj" />
     <ProjectReference Include="..\IrisAura.Theme\IrisAura.Theme.csproj" />
     <ProjectReference Include="..\IrisAura.Island.Providers\IrisAura.Island.Providers.csproj" />

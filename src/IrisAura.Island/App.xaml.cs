@@ -4,33 +4,37 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Threading;
 using IrisAura.Island.Diagnostics;
+using IrisAura.Island.Engine;
 using IrisAura.Island.Shell;
+using Serilog;
 
 namespace IrisAura.Island;
 
 /// <summary>
 /// IrisAura Island entry point. One instance per user session.
 /// <list type="bullet">
-/// <item><c>--debug</c>: show the Phase 1 debug panel (always shown in Debug builds).</item>
+/// <item><c>--debug</c>: show the debug panel (always shown in Debug builds).</item>
 /// <item><c>--quit</c>: ask the running instance to exit.</item>
-/// <item><c>--selftest &lt;report.json&gt;</c>: run the integration self-test, write the report, exit (0 = all passed).</item>
+/// <item><c>--selftest &lt;report.json&gt;</c> / <c>--perf &lt;report.json&gt;</c>: integration self-test, then exit (0 = all passed).</item>
 /// </list>
-/// A second launch without arguments opens the debug panel of the running instance.
+/// A second launch shows a hidden Island again (and its debug panel when started with <c>--debug</c>).
 /// </summary>
 public partial class App : Application
 {
     private const string InstanceMutexName = @"Local\IrisAura.Island.Instance";
     private const string QuitEventName = @"Local\IrisAura.Island.Quit";
+    private const string ShowEventName = @"Local\IrisAura.Island.Show";
     private const string ShowDebugEventName = @"Local\IrisAura.Island.ShowDebug";
 
+    private readonly List<RegisteredWaitHandle> _waits = [];
+    private readonly List<EventWaitHandle> _events = [];
     private Mutex? _instanceMutex;
-    private EventWaitHandle? _quitEvent;
-    private EventWaitHandle? _showDebugEvent;
-    private RegisteredWaitHandle? _quitWait;
-    private RegisteredWaitHandle? _showDebugWait;
     private IslandWindow? _island;
-    private FakeScenarioDriver? _driver;
     private IslandOptions? _options;
+    private ActivityManager? _manager;
+    private ActivityProviderHost? _host;
+    private IslandController? _controller;
+    private DebugActivityProvider? _debugProvider;
     private DebugPanelWindow? _debugPanel;
 
     protected override void OnStartup(StartupEventArgs e)
@@ -50,7 +54,7 @@ public partial class App : Application
         if (!createdNew)
         {
             // Another instance owns the session: forward the request and exit.
-            Signal(quit ? QuitEventName : ShowDebugEventName);
+            Signal(quit ? QuitEventName : debug ? ShowDebugEventName : ShowEventName);
             if (selfTestPath is not null)
             {
                 File.WriteAllText(selfTestPath, "{ \"error\": \"IrisAura Island is already running; run 'IrisAura.Island.exe --quit' first.\" }");
@@ -68,21 +72,47 @@ public partial class App : Application
             return;
         }
 
+#if DEBUG
+        debug = true;
+#endif
+        ConfigureLogging();
+        DispatcherUnhandledException += (_, ex) =>
+            Log.Error("Unhandled UI exception: {Type}: {Message}", ex.Exception.GetType().Name, ex.Exception.Message);
+
         _options = new IslandOptions();
         _island = new IslandWindow(_options);
-        _driver = new FakeScenarioDriver(_island);
+        _manager = new ActivityManager(TimeProvider.System);
+        _host = new ActivityProviderHost(_manager, SynchronizationContext.Current);
+        _debugProvider = new DebugActivityProvider();
+        _host.Register(_debugProvider);
+
+        // The self-test must not change the user's real persisted state.
+        var statePath = selfTestPath is null
+            ? IslandStateStore.DefaultPath
+            : Path.Combine(Path.GetTempPath(), $"irisaura-selftest-state-{Environment.ProcessId}.json");
+        _controller = new IslandController(_island, _manager, _host, new IslandStateStore(statePath)) { DebugMenuEnabled = debug };
+        _controller.QuitRequested += (_, _) => Shutdown(0);
+        _controller.DebugPanelRequested += (_, _) => ShowDebugPanel();
+        _controller.StartTimerRequested += (_, duration) => _debugProvider.StartTimer(duration); // real timers: Phase 4
 
         var processStart = Process.GetCurrentProcess().StartTime;
-        var startupMs = 0.0;
         _island.ContentRendered += (_, _) =>
         {
-            startupMs = (DateTime.Now - processStart).TotalMilliseconds;
-            Trace.TraceInformation($"IrisAura.Island first frame {startupMs:0} ms after process start.");
+            var startupMs = (DateTime.Now - processStart).TotalMilliseconds;
+            Log.Information("IrisAura Island first frame {StartupMs:0} ms after process start", startupMs);
+
+            // After first paint: tray icon and providers (keeps time-to-first-frame short).
+            Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
+            {
+                _controller.ShowTrayIcon();
+                _host.StartAll();
+            }));
+
             if (selfTestPath is not null)
             {
                 Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(async () =>
                 {
-                    var test = new SelfTest(_island, _driver, _options, selfTestPath, startupMs);
+                    var test = new SelfTest(_island, _controller, _debugProvider, _host, _options, selfTestPath, startupMs);
                     var exitCode = perfOnly ? await test.RunPerfAsync() : await test.RunAsync();
                     Shutdown(exitCode);
                 }));
@@ -90,15 +120,16 @@ public partial class App : Application
         };
 
         _island.Show();
+        _controller.Start();
 
-        _quitEvent = new EventWaitHandle(false, EventResetMode.AutoReset, QuitEventName);
-        _showDebugEvent = new EventWaitHandle(false, EventResetMode.AutoReset, ShowDebugEventName);
-        _quitWait = ThreadPool.RegisterWaitForSingleObject(_quitEvent, (_, _) => Dispatcher.BeginInvoke(() => Shutdown(0)), null, Timeout.Infinite, false);
-        _showDebugWait = ThreadPool.RegisterWaitForSingleObject(_showDebugEvent, (_, _) => Dispatcher.BeginInvoke(ShowDebugPanel), null, Timeout.Infinite, false);
+        Listen(QuitEventName, () => Shutdown(0));
+        Listen(ShowEventName, () => _controller.ShowAgain());
+        Listen(ShowDebugEventName, () =>
+        {
+            _controller.ShowAgain();
+            ShowDebugPanel();
+        });
 
-#if DEBUG
-        debug = true;
-#endif
         if (debug && selfTestPath is null)
         {
             ShowDebugPanel();
@@ -107,10 +138,18 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
-        _quitWait?.Unregister(null);
-        _showDebugWait?.Unregister(null);
-        _quitEvent?.Dispose();
-        _showDebugEvent?.Dispose();
+        foreach (var wait in _waits)
+        {
+            wait.Unregister(null);
+        }
+
+        foreach (var handle in _events)
+        {
+            handle.Dispose();
+        }
+
+        _host?.StopAll();
+        _controller?.Dispose();
         _island?.Close();
         if (_instanceMutex is not null)
         {
@@ -118,19 +157,47 @@ public partial class App : Application
             _instanceMutex.Dispose();
         }
 
+        Log.Information("IrisAura Island exiting");
+        Log.CloseAndFlush();
         base.OnExit(e);
+    }
+
+    /// <summary>
+    /// Logs to %LocalAppData%\IrisAura\logs (BLUEPRINT §0.2, §4): 7 daily files, 5 MB cap each.
+    /// Never logs notification content, media titles, file names or other user content.
+    /// </summary>
+    private static void ConfigureLogging()
+    {
+        var directory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IrisAura", "logs");
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Information()
+            .WriteTo.File(
+                Path.Combine(directory, "island-.log"),
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 7,
+                fileSizeLimitBytes: 5_000_000,
+                rollOnFileSizeLimit: true)
+            .CreateLogger();
+        Log.Information("IrisAura Island starting, version {Version}", typeof(App).Assembly.GetName().Version);
+    }
+
+    private void Listen(string eventName, Action action)
+    {
+        var handle = new EventWaitHandle(false, EventResetMode.AutoReset, eventName);
+        _events.Add(handle);
+        _waits.Add(ThreadPool.RegisterWaitForSingleObject(handle, (_, _) => Dispatcher.BeginInvoke(action), null, Timeout.Infinite, false));
     }
 
     private void ShowDebugPanel()
     {
-        if (_island is null || _driver is null || _options is null)
+        if (_island is null || _controller is null || _debugProvider is null || _host is null || _options is null)
         {
             return;
         }
 
         if (_debugPanel is null)
         {
-            _debugPanel = new DebugPanelWindow(_island, _driver, _options);
+            _debugPanel = new DebugPanelWindow(_island, _controller, _debugProvider, _host, _options);
             _debugPanel.Closed += (_, _) => _debugPanel = null;
             _debugPanel.Show();
         }

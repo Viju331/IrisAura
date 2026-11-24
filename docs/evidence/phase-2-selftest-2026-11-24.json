@@ -1,0 +1,415 @@
+{
+  "tool": "IrisAura.Island --selftest",
+  "version": "1.0.0.0",
+  "configuration": "Release",
+  "timestampUtc": "2026-11-24T14:20:16.6115577Z",
+  "machine": {
+    "os": "Microsoft Windows NT 10.0.26300.0",
+    "architecture": "X64",
+    "processors": 4,
+    "monitors": 1,
+    "primaryScalePercent": 100,
+    "primaryBounds": "(0,0 1920x1080)",
+    "primaryWorkArea": "(0,0 1920x1032)",
+    "windowsAnimationsEnabled": true
+  },
+  "summary": {
+    "passed": 38,
+    "failed": 12,
+    "inconclusive": 2,
+    "info": 3
+  },
+  "metrics": {
+    "startupToFirstFrameMs": 1756.7,
+    "idleCpu": {
+      "MedianPercent": 0.117,
+      "SamplesPercent": [
+        0.195,
+        0.078,
+        0.117
+      ],
+      "MachineLoadPercent": 17.7,
+      "WarmUpSeconds": 5,
+      "SampleSeconds": 10
+    },
+    "workingSetMb": 87.3,
+    "privateMb": 36,
+    "frames: idle\u2192compact (media)": {
+      "Frames": 40,
+      "AverageMs": 18.555884999999996,
+      "P95Ms": 33.3267,
+      "MaxMs": 47.0866,
+      "Dropped": 4,
+      "AverageFps": 53.89125875699274
+    },
+    "frames: compact\u2192expanded (pin)": {
+      "Frames": 42,
+      "AverageMs": 16.873161904761908,
+      "P95Ms": 16.6666,
+      "MaxMs": 33.2643,
+      "Dropped": 1,
+      "AverageFps": 59.26571472758654
+    },
+    "frames: expanded\u2192compact (unpin)": {
+      "Frames": 36,
+      "AverageMs": 17.558363888888884,
+      "P95Ms": 33.3075,
+      "MaxMs": 33.3217,
+      "Dropped": 2,
+      "AverageFps": 56.95291465241875
+    },
+    "frames: compact\u2192split (timer \u002B media)": {
+      "Frames": 27,
+      "AverageMs": 17.783703703703708,
+      "P95Ms": 30.221700000000002,
+      "MaxMs": 33.3244,
+      "Dropped": 2,
+      "AverageFps": 56.23125624791735
+    },
+    "frames: split\u2192expanded generic (pin)": {
+      "Frames": 39,
+      "AverageMs": 17.770933333333332,
+      "P95Ms": 33.302699999999994,
+      "MaxMs": 33.3332,
+      "Dropped": 3,
+      "AverageFps": 56.27166459086749
+    },
+    "frames: expanded\u2192split (unpin)": {
+      "Frames": 32,
+      "AverageMs": 18.544109374999998,
+      "P95Ms": 33.3348,
+      "MaxMs": 43.4426,
+      "Dropped": 3,
+      "AverageFps": 53.925480042095586
+    },
+    "frames: split\u2192banner": {
+      "Frames": 40,
+      "AverageMs": 16.955507500000003,
+      "P95Ms": 16.667499999999997,
+      "MaxMs": 33.3106,
+      "Dropped": 1,
+      "AverageFps": 58.977886683722076
+    },
+    "frames: swap (bubble click)": {
+      "Frames": 11,
+      "AverageMs": 19.76397272727273,
+      "P95Ms": 34.1173,
+      "MaxMs": 34.1173,
+      "Dropped": 2,
+      "AverageFps": 50.5971149525054
+    },
+    "frames: shake": {
+      "Frames": 20,
+      "AverageMs": 17.554804999999995,
+      "P95Ms": 17.7901,
+      "MaxMs": 33.308699999999995,
+      "Dropped": 1,
+      "AverageFps": 56.964460727419095
+    },
+    "frames: split\u2192idle": {
+      "Frames": 34,
+      "AverageMs": 17.384647058823525,
+      "P95Ms": 24.543200000000002,
+      "MaxMs": 33.3302,
+      "Dropped": 1,
+      "AverageFps": 57.522019090543054
+    },
+    "machineLoadDuringTransitionsPercent": 40.3,
+    "mediaWaveformCpu": {
+      "MedianPercent": 1.521,
+      "SamplesPercent": [
+        1.521,
+        2.262,
+        1.484
+      ],
+      "MachineLoadPercent": 21.8,
+      "WarmUpSeconds": 5,
+      "SampleSeconds": 10
+    },
+    "frames: reduced-motion cross-fade": {
+      "Frames": 8,
+      "AverageMs": 19.4006625,
+      "P95Ms": 33.3276,
+      "MaxMs": 33.3276,
+      "Dropped": 1,
+      "AverageFps": 51.54463152997997
+    }
+  },
+  "checks": [
+    {
+      "Name": "startup to first frame \u2264 800 ms",
+      "Outcome": "fail",
+      "Detail": "1757 ms"
+    },
+    {
+      "Name": "window is a tool window (no Alt\u002BTab/taskbar)",
+      "Outcome": "pass",
+      "Detail": "exstyle 0x80800A8"
+    },
+    {
+      "Name": "window never activates (WS_EX_NOACTIVATE)",
+      "Outcome": "pass",
+      "Detail": "exstyle 0x80800A8"
+    },
+    {
+      "Name": "window is layered (per-pixel alpha)",
+      "Outcome": "pass",
+      "Detail": "exstyle 0x80800A8"
+    },
+    {
+      "Name": "window is topmost",
+      "Outcome": "pass",
+      "Detail": "exstyle 0x80800A8"
+    },
+    {
+      "Name": "idle pill is click-through",
+      "Outcome": "pass",
+      "Detail": "exstyle 0x80800A8"
+    },
+    {
+      "Name": "focus shortcut registered (Ctrl\u002BAlt\u002BShift\u002BI)",
+      "Outcome": "pass",
+      "Detail": "registered"
+    },
+    {
+      "Name": "placed at top-centre of the work area",
+      "Outcome": "pass",
+      "Detail": "expected (720,0 480x250), actual (720,0 480x250), work area (0,0 1920x1032), scale 1"
+    },
+    {
+      "Name": "idle CPU \u003C 0.3%",
+      "Outcome": "pass",
+      "Detail": "median 0.117% (samples 0.195 / 0.078 / 0.117, 10 s each after 5 s warm-up); whole-machine CPU load 18%"
+    },
+    {
+      "Name": "working set \u003C 120 MB",
+      "Outcome": "pass",
+      "Detail": "87.3 MB working set, 36.0 MB private"
+    },
+    {
+      "Name": "no focus taken: idle\u2192compact (media)",
+      "Outcome": "pass",
+      "Detail": "foreground unchanged True"
+    },
+    {
+      "Name": "no dropped frames (60 fps): idle\u2192compact (media)",
+      "Outcome": "fail",
+      "Detail": "40 frames, avg 18.6 ms (54 fps), p95 33.3 ms, max 47.1 ms, dropped 4"
+    },
+    {
+      "Name": "no focus taken: compact\u2192expanded (pin)",
+      "Outcome": "pass",
+      "Detail": "foreground unchanged True"
+    },
+    {
+      "Name": "no dropped frames (60 fps): compact\u2192expanded (pin)",
+      "Outcome": "fail",
+      "Detail": "42 frames, avg 16.9 ms (59 fps), p95 16.7 ms, max 33.3 ms, dropped 1"
+    },
+    {
+      "Name": "no focus taken: expanded\u2192compact (unpin)",
+      "Outcome": "pass",
+      "Detail": "foreground unchanged True"
+    },
+    {
+      "Name": "no dropped frames (60 fps): expanded\u2192compact (unpin)",
+      "Outcome": "fail",
+      "Detail": "36 frames, avg 17.6 ms (57 fps), p95 33.3 ms, max 33.3 ms, dropped 2"
+    },
+    {
+      "Name": "no focus taken: compact\u2192split (timer \u002B media)",
+      "Outcome": "pass",
+      "Detail": "foreground unchanged True"
+    },
+    {
+      "Name": "no dropped frames (60 fps): compact\u2192split (timer \u002B media)",
+      "Outcome": "fail",
+      "Detail": "27 frames, avg 17.8 ms (56 fps), p95 30.2 ms, max 33.3 ms, dropped 2"
+    },
+    {
+      "Name": "no focus taken: split\u2192expanded generic (pin)",
+      "Outcome": "pass",
+      "Detail": "foreground unchanged True"
+    },
+    {
+      "Name": "no dropped frames (60 fps): split\u2192expanded generic (pin)",
+      "Outcome": "fail",
+      "Detail": "39 frames, avg 17.8 ms (56 fps), p95 33.3 ms, max 33.3 ms, dropped 3"
+    },
+    {
+      "Name": "no focus taken: expanded\u2192split (unpin)",
+      "Outcome": "pass",
+      "Detail": "foreground unchanged True"
+    },
+    {
+      "Name": "no dropped frames (60 fps): expanded\u2192split (unpin)",
+      "Outcome": "fail",
+      "Detail": "32 frames, avg 18.5 ms (54 fps), p95 33.3 ms, max 43.4 ms, dropped 3"
+    },
+    {
+      "Name": "arbiter: timer (60) in the pill, media (50) in the bubble",
+      "Outcome": "pass",
+      "Detail": "main debug:timer, bubble debug:media"
+    },
+    {
+      "Name": "no focus taken: split\u2192banner",
+      "Outcome": "pass",
+      "Detail": "foreground unchanged True"
+    },
+    {
+      "Name": "no dropped frames (60 fps): split\u2192banner",
+      "Outcome": "fail",
+      "Detail": "40 frames, avg 17.0 ms (59 fps), p95 16.7 ms, max 33.3 ms, dropped 1"
+    },
+    {
+      "Name": "transient notification takes the pill",
+      "Outcome": "pass",
+      "Detail": "state Banner"
+    },
+    {
+      "Name": "banner expires and the previous layout returns",
+      "Outcome": "pass",
+      "Detail": "state Split"
+    },
+    {
+      "Name": "no focus taken: swap (bubble click)",
+      "Outcome": "pass",
+      "Detail": "foreground unchanged True"
+    },
+    {
+      "Name": "no dropped frames (60 fps): swap (bubble click)",
+      "Outcome": "fail",
+      "Detail": "11 frames, avg 19.8 ms (51 fps), p95 34.1 ms, max 34.1 ms, dropped 2"
+    },
+    {
+      "Name": "swap puts the bubble activity in the pill",
+      "Outcome": "pass",
+      "Detail": "main debug:media, bubble debug:timer"
+    },
+    {
+      "Name": "no focus taken: shake",
+      "Outcome": "pass",
+      "Detail": "foreground unchanged True"
+    },
+    {
+      "Name": "no dropped frames (60 fps): shake",
+      "Outcome": "fail",
+      "Detail": "20 frames, avg 17.6 ms (57 fps), p95 17.8 ms, max 33.3 ms, dropped 1"
+    },
+    {
+      "Name": "no focus taken: split\u2192idle",
+      "Outcome": "pass",
+      "Detail": "foreground unchanged True"
+    },
+    {
+      "Name": "no dropped frames (60 fps): split\u2192idle",
+      "Outcome": "fail",
+      "Detail": "34 frames, avg 17.4 ms (58 fps), p95 24.5 ms, max 33.3 ms, dropped 1"
+    },
+    {
+      "Name": "CPU with media \u002B waveform \u003C 1.5%",
+      "Outcome": "fail",
+      "Detail": "median 1.521% (samples 1.521 / 2.262 / 1.484, 10 s each after 5 s warm-up); whole-machine CPU load 22% (fake 30 Hz waveform)"
+    },
+    {
+      "Name": "cursor elsewhere: clicks on the pill area pass through to the window below",
+      "Outcome": "pass",
+      "Detail": "WS_EX_TRANSPARENT set"
+    },
+    {
+      "Name": "cursor over pill: the pill receives clicks",
+      "Outcome": "pass",
+      "Detail": "WS_EX_TRANSPARENT cleared"
+    },
+    {
+      "Name": "empty (alpha 0) window area passes clicks even without WS_EX_TRANSPARENT",
+      "Outcome": "pass",
+      "Detail": "probe at (732, 238)"
+    },
+    {
+      "Name": "shadow pixels without WS_EX_TRANSPARENT",
+      "Outcome": "info",
+      "Detail": "shadow catches clicks \u2014 the WS_EX_TRANSPARENT toggle is required (as designed)"
+    },
+    {
+      "Name": "re-placed after WM_DISPLAYCHANGE",
+      "Outcome": "pass",
+      "Detail": "expected (720,0 480x250), actual (720,0 480x250)"
+    },
+    {
+      "Name": "re-placed after work-area change (WM_SETTINGCHANGE)",
+      "Outcome": "pass",
+      "Detail": "expected (720,0 480x250), actual (720,0 480x250); window procedure saw 1 WM_SETTINGCHANGE"
+    },
+    {
+      "Name": "reduced motion: size snaps, content cross-fades",
+      "Outcome": "pass",
+      "Detail": "geometry snapped True (400\u00D7140); cross-fade 8 frames, avg 19.4 ms (52 fps), p95 33.3 ms, max 33.3 ms, dropped 1"
+    },
+    {
+      "Name": "tray icon added to the notification area",
+      "Outcome": "pass",
+      "Detail": "Shell_NotifyIcon NIM_ADD succeeded"
+    },
+    {
+      "Name": "quiet mode suppresses notification banners only",
+      "Outcome": "pass",
+      "Detail": "notification suppressed True; charging HUD still shown True"
+    },
+    {
+      "Name": "a failing provider is disabled and its activities removed",
+      "Outcome": "pass",
+      "Detail": "state Faulted, error \u0022InvalidOperationException: Simulated provider failure (debug panel)\u0022, island Idle"
+    },
+    {
+      "Name": "a failed provider can be restarted",
+      "Outcome": "pass",
+      "Detail": "main debug:media"
+    },
+    {
+      "Name": "policy classifies a borderless monitor-covering window as full screen",
+      "Outcome": "pass",
+      "Detail": "rect (0,0 1920x1080), maximised-with-caption False, shell state AcceptsNotifications"
+    },
+    {
+      "Name": "hides when a borderless window covers the monitor",
+      "Outcome": "inconclusive",
+      "Detail": "Windows did not give the probe window the foreground"
+    },
+    {
+      "Name": "visible again after the full-screen window closes",
+      "Outcome": "pass",
+      "Detail": "hidden False"
+    },
+    {
+      "Name": "policy classifies a maximised window with a title bar as not full screen",
+      "Outcome": "pass",
+      "Detail": "rect (-8,-8 1936x1048), maximised-with-caption True, shell state AcceptsNotifications"
+    },
+    {
+      "Name": "stays visible over a normal maximised window",
+      "Outcome": "inconclusive",
+      "Detail": "Windows did not give the probe window the foreground"
+    },
+    {
+      "Name": "focus mode makes the Island activatable",
+      "Outcome": "pass",
+      "Detail": "focus mode True"
+    },
+    {
+      "Name": "focus mode took the foreground (programmatic call)",
+      "Outcome": "info",
+      "Detail": "no \u2014 Windows refused SetForegroundWindow without user input; the real trigger (WM_HOTKEY) must be checked by hand"
+    },
+    {
+      "Name": "leaving focus mode restores no-activate",
+      "Outcome": "pass",
+      "Detail": "focus mode False"
+    },
+    {
+      "Name": "focus returned to the previous window",
+      "Outcome": "info",
+      "Detail": "yes"
+    }
+  ]
+}

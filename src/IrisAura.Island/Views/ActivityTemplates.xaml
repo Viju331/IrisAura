@@ -5,7 +5,8 @@
 -->
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:controls="clr-namespace:IrisAura.Island.Views.Controls">
+                    xmlns:controls="clr-namespace:IrisAura.Island.Views.Controls"
+                    xmlns:views="clr-namespace:IrisAura.Island.Views">
 
   <!-- Round icon button; Tag carries the glyph geometry. -->
   <Style x:Key="IslandIconButton" TargetType="Button">
@@ -219,6 +220,96 @@
   <DataTemplate x:Key="Bubble.FakeTimerActivity">
     <controls:ProgressRing Width="18" Height="18" Progress="{Binding Progress}"
                            RingBrush="{StaticResource Aura.Cyan}" TrackBrush="{StaticResource Aura.Surface}" />
+  </DataTemplate>
+
+  <!-- ===== Generic activities (engine activities without a custom view: SDK, HUDs, calls, downloads) ===== -->
+
+  <views:GlyphKeyConverter x:Key="GlyphKey" />
+  <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+
+  <!-- Filled 16 px glyph from a resource key. -->
+  <DataTemplate x:Key="GenericGlyph">
+    <Viewbox Width="16" Height="16">
+      <Path Width="24" Height="24" Stretch="None" Fill="{StaticResource Aura.Frost}"
+            Data="{Binding LeadingGlyph, Converter={StaticResource GlyphKey}}" />
+    </Viewbox>
+  </DataTemplate>
+
+  <DataTemplate x:Key="Compact.GenericActivityView">
+    <Grid>
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="13,0,0,0">
+        <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource GenericGlyph}" VerticalAlignment="Center" />
+        <TextBlock Text="{Binding LeadingText}" FontSize="13" FontWeight="SemiBold" Margin="7,0,0,0"
+                   Foreground="{StaticResource Aura.Frost}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="150" />
+      </StackPanel>
+      <TextBlock Text="{Binding TrailingText}" FontSize="13" FontWeight="SemiBold" Typography.NumeralAlignment="Tabular"
+                 Foreground="{StaticResource Aura.Frost}" HorizontalAlignment="Right" VerticalAlignment="Center"
+                 Margin="0,0,15,0" TextTrimming="CharacterEllipsis" MaxWidth="120" />
+      <controls:ProgressRing Width="18" Height="18" HorizontalAlignment="Right" Margin="0,0,13,0"
+                             Progress="{Binding TrailingProgress, FallbackValue=0, TargetNullValue=0}"
+                             RingBrush="{StaticResource Aura.Blue}" TrackBrush="{StaticResource Aura.Surface}"
+                             Visibility="{Binding HasTrailingProgress, Converter={StaticResource BoolToVisibility}}" />
+    </Grid>
+  </DataTemplate>
+
+  <DataTemplate x:Key="Expanded.GenericActivityView">
+    <StackPanel Margin="22,18,22,14">
+      <StackPanel Orientation="Horizontal">
+        <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource GenericGlyph}" VerticalAlignment="Center" Margin="0,0,10,0" />
+        <TextBlock Text="{Binding Title}" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource Aura.Frost}"
+                   TextTrimming="CharacterEllipsis" MaxWidth="320" />
+      </StackPanel>
+      <TextBlock Text="{Binding Subtitle}" FontSize="12.5" Margin="0,4,0,0" Foreground="{StaticResource Aura.Mist}"
+                 TextTrimming="CharacterEllipsis" />
+      <ProgressBar Style="{StaticResource IslandProgressBar}" Margin="0,12,0,0"
+                   Value="{Binding Progress, Mode=OneWay, FallbackValue=0, TargetNullValue=0}"
+                   Visibility="{Binding HasProgress, Converter={StaticResource BoolToVisibility}}" />
+      <ItemsControl ItemsSource="{Binding Buttons}" Margin="0,14,0,0"
+                    Visibility="{Binding HasButtons, Converter={StaticResource BoolToVisibility}}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <StackPanel Orientation="Horizontal" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <Button Style="{StaticResource IslandTextButton}" Content="{Binding Label}" Command="{Binding Command}" />
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </StackPanel>
+  </DataTemplate>
+
+  <DataTemplate x:Key="Banner.GenericActivityView">
+    <Grid Margin="16,0,20,0">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="40" />
+        <ColumnDefinition Width="*" />
+      </Grid.ColumnDefinitions>
+      <Border Width="40" Height="40" CornerRadius="10" Background="{StaticResource Aura.Ring}">
+        <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource GenericGlyph}"
+                          HorizontalAlignment="Center" VerticalAlignment="Center" />
+      </Border>
+      <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+        <TextBlock Text="{Binding Title}" FontSize="13.5" FontWeight="SemiBold"
+                   Foreground="{StaticResource Aura.Frost}" TextTrimming="CharacterEllipsis" />
+        <TextBlock Text="{Binding Subtitle}" FontSize="12" Foreground="{StaticResource Aura.Mist}"
+                   TextTrimming="CharacterEllipsis" />
+        <ProgressBar Style="{StaticResource IslandProgressBar}" Margin="0,6,0,0"
+                     Value="{Binding TrailingProgress, Mode=OneWay, FallbackValue=0, TargetNullValue=0}"
+                     Visibility="{Binding HasTrailingProgress, Converter={StaticResource BoolToVisibility}}" />
+      </StackPanel>
+    </Grid>
+  </DataTemplate>
+
+  <DataTemplate x:Key="Bubble.GenericActivityView">
+    <Grid>
+      <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource GenericGlyph}" />
+      <controls:ProgressRing Width="18" Height="18"
+                             Progress="{Binding TrailingProgress, FallbackValue=0, TargetNullValue=0}"
+                             RingBrush="{StaticResource Aura.Blue}" TrackBrush="{StaticResource Aura.Surface}"
+                             Visibility="{Binding HasTrailingProgress, Converter={StaticResource BoolToVisibility}}" />
+    </Grid>
   </DataTemplate>
 
   <!-- ===== Notification banner ===== -->

@@ -24,6 +24,6 @@
 
 - Build and test: `./scripts/build.ps1` (or `dotnet build IrisAura.Managed.slnf` / `dotnet test IrisAura.Managed.slnf`). Native projects need Visual Studio C++ tools; the script skips them with a warning if MSVC is missing.
 - Use `IrisAura.Managed.slnf` with the dotnet CLI; `IrisAura.sln` also contains the C++ project, which only MSBuild from Visual Studio can build.
-- One branch per phase (`phase-<id>`). Do not commit directly to `main`.
+- Owner decision (2026-11-24): implementation continues directly on `main`. Create a separate branch only to fix issues found after testing. Commit only after `./scripts/build.ps1` passes.
 - After changing packages, run `./scripts/generate-dependency-inventory.ps1` and update THIRD_PARTY_NOTICES.md.
 - Record architecture decisions as ADRs in docs/DECISIONS/ (copy docs/DECISIONS/0000-template.md).

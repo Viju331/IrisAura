@@ -7,7 +7,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Media;
+using IrisAura.Island.Engine;
 using IrisAura.Island.Shell;
+using ActivityKind = IrisAura.Island.Engine.ActivityKind;
 using static IrisAura.Island.Interop.NativeMethods;
 
 namespace IrisAura.Island.Diagnostics;
@@ -21,11 +23,15 @@ namespace IrisAura.Island.Diagnostics;
 /// </summary>
 internal sealed class SelfTest(
     IslandWindow island,
-    FakeScenarioDriver driver,
+    IslandController controller,
+    DebugActivityProvider driver,
+    ActivityProviderHost host,
     IslandOptions options,
     string outputPath,
     double startupMs)
 {
+    private static readonly TimeSpan BannerDuration = ActivityDefaults.Ttl(ActivityKind.Notification)!.Value;
+
     private const double IdleCpuTargetPercent = 0.3;
     private const double MediaCpuTargetPercent = 1.5;
     private const double MemoryTargetMb = 120;
@@ -98,17 +104,25 @@ internal sealed class SelfTest(
         await TransitionAsync("compact→split (timer + media)", () => driver.Show(FakeScenario.MediaAndTimer));
         await TransitionAsync("split→expanded generic (pin)", island.TogglePin);
         await TransitionAsync("expanded→split (unpin)", island.TogglePin);
-        await TransitionAsync("split→banner", driver.ShowNotification);
-        await Task.Delay(FakeScenarioDriver.BannerDuration + TimeSpan.FromMilliseconds(300));
+        Add("arbiter: timer (60) in the pill, media (50) in the bubble",
+            controller.Layout.Main?.Id == DebugActivityProvider.TimerId && controller.Layout.Bubble?.Id == DebugActivityProvider.MediaId,
+            $"main {controller.Layout.Main?.Id}, bubble {controller.Layout.Bubble?.Id}");
+        await TransitionAsync("split→banner", driver.Notify);
+        Add("transient notification takes the pill", island.VisualState == IslandVisualState.Banner, $"state {island.VisualState}");
+        await Task.Delay(BannerDuration + TimeSpan.FromMilliseconds(300));
         await WaitForAnimationAsync();
-        Add("banner returns to previous layout after timeout", island.VisualState == IslandVisualState.Split, $"state {island.VisualState}");
+        Add("banner expires and the previous layout returns", island.VisualState == IslandVisualState.Split, $"state {island.VisualState}");
+        await TransitionAsync("swap (bubble click)", controller.Swap);
+        Add("swap puts the bubble activity in the pill",
+            controller.Layout.Main?.Id == DebugActivityProvider.MediaId && controller.Layout.Bubble?.Id == DebugActivityProvider.TimerId,
+            $"main {controller.Layout.Main?.Id}, bubble {controller.Layout.Bubble?.Id}");
         await TransitionAsync("shake", island.Shake);
         await TransitionAsync("split→idle", () => driver.Show(FakeScenario.Idle));
         _metrics["machineLoadDuringTransitionsPercent"] = LoadSince(loadStart);
 
         // ---- media + waveform CPU (after warm-up, median of samples)
         driver.Show(FakeScenario.Media);
-        await WaitForAnimationAsync();
+        await SettleAsync();
         var media = await MeasureCpuMedianAsync(TimeSpan.FromSeconds(5), samples: 3);
         _metrics["mediaWaveformCpu"] = media;
         Add($"CPU with media + waveform < {MediaCpuTargetPercent}%", media.MedianPercent < MediaCpuTargetPercent, media + " (fake 30 Hz waveform)");
@@ -123,13 +137,20 @@ internal sealed class SelfTest(
         options.ReducedMotion = ReducedMotionMode.On;
         island.ApplyOptions();
         driver.Show(FakeScenario.Timer);
-        var snapped = island.CurrentGeometry == island.TargetGeometry;
+        await SettleAsync();
+        island.TogglePin(); // compact → expanded: a real size change, applied synchronously
+        var snapped = island.CurrentGeometry == island.TargetGeometry && island.TargetGeometry != IslandLayout.Compact;
         var reduced = await WaitForAnimationAsync();
         _metrics["frames: reduced-motion cross-fade"] = reduced;
         Add("reduced motion: size snaps, content cross-fades", snapped && reduced.Frames * reduced.AverageMs <= 400,
-            $"geometry snapped {snapped}; cross-fade {reduced}");
+            $"geometry snapped {snapped} ({island.TargetGeometry.Width:0}×{island.TargetGeometry.Height:0}); cross-fade {reduced}");
+        island.TogglePin();
+        await WaitForAnimationAsync();
         options.ReducedMotion = ReducedMotionMode.FollowWindows;
         island.ApplyOptions();
+
+        // ---- activity engine integration
+        await EngineAsync();
 
         // ---- full screen
         await FullscreenAsync(monitor);
@@ -168,10 +189,55 @@ internal sealed class SelfTest(
         return 0;
     }
 
+    private async Task EngineAsync()
+    {
+        Add("tray icon added to the notification area", controller.TrayIconVisible, controller.TrayIconVisible ? "Shell_NotifyIcon NIM_ADD succeeded" : "not added");
+
+        // Quiet mode suppresses notification banners only.
+        driver.Show(FakeScenario.Media);
+        await SettleAsync();
+        controller.SetQuietMode(true);
+        driver.Notify();
+        await SettleAsync();
+        var suppressed = island.VisualState != IslandVisualState.Banner && controller.Layout.Suppressed.Count == 1;
+        driver.Charging();
+        await SettleAsync();
+        var chargingShown = island.VisualState == IslandVisualState.Banner;
+        controller.SetQuietMode(false);
+        Add("quiet mode suppresses notification banners only", suppressed && chargingShown,
+            $"notification suppressed {suppressed}; charging HUD still shown {chargingShown}");
+        await Task.Delay(TimeSpan.FromSeconds(3));
+        await WaitForAnimationAsync();
+
+        // Provider failure is isolated: its activities disappear, the Island keeps running, restart works.
+        driver.Show(FakeScenario.MediaAndTimer);
+        await SettleAsync();
+        driver.Fail();
+        await SettleAsync();
+        var status = host.Status(DebugActivityProvider.ProviderId);
+        Add("a failing provider is disabled and its activities removed",
+            status?.State == ProviderState.Faulted && controller.Layout.Main is null && island.VisualState == IslandVisualState.Idle,
+            $"state {status?.State}, error \"{status?.LastError}\", island {island.VisualState}");
+
+        host.Start(DebugActivityProvider.ProviderId);
+        driver.Show(FakeScenario.Media);
+        await SettleAsync();
+        Add("a failed provider can be restarted", host.Status(DebugActivityProvider.ProviderId)?.State == ProviderState.Running
+            && controller.Layout.Main?.Id == DebugActivityProvider.MediaId, $"main {controller.Layout.Main?.Id}");
+    }
+
+    /// <summary>Lets posted provider operations apply and the resulting animation finish.</summary>
+    private async Task SettleAsync()
+    {
+        await Task.Delay(80);
+        await WaitForAnimationAsync();
+    }
+
     private async Task TransitionAsync(string name, Action action)
     {
         var foregroundBefore = GetForegroundWindow();
         action();
+        await Task.Delay(60); // provider operations are posted to the dispatcher
         var summary = await WaitForAnimationAsync();
         _metrics["frames: " + name] = summary;
 

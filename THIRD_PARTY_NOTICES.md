@@ -10,8 +10,12 @@ test-only components are listed for completeness.
 
 ## Redistributed components
 
-None yet. Add an entry (name, version, licence, source URL, copyright line) when the first
-redistributed package or model is added.
+| Component | Version | Licence | Source | Used by |
+|---|---|---|---|---|
+| Serilog | 4.4.0 | Apache-2.0 | https://github.com/serilog/serilog — Copyright © Serilog Contributors | IrisAura.Island (logging) |
+| Serilog.Sinks.File | 7.0.0 | Apache-2.0 | https://github.com/serilog/serilog-sinks-file — Copyright © Serilog Contributors | IrisAura.Island (log files) |
+
+Licence texts must be bundled with the installer and shown in *Settings → About → Third-party notices* (Phase 9).
 
 ## Build-time and test-only components (not redistributed)
 

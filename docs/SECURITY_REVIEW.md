@@ -38,6 +38,16 @@ named reviewer, a date and linked evidence. Independent review means someone oth
 - [x] Island projects still reference no Face project (architecture tests).
 - [x] Same-session named events (`Local\IrisAura.Island.Quit`, `…ShowDebug`) accepted as low risk: only processes of the same user/session can signal them (THREAT_MODEL T-15).
 
+### Phase 2 (activity engine) — self-review, 2026-11-24
+
+- [x] Providers are isolated: exceptions from start, actions or reported failures disable only that provider (tests + self-test).
+- [x] Activity ids are owned by their provider; other providers cannot update or end them.
+- [x] Persisted state holds only `QuietMode` and `HiddenUntil` (test asserts the only keys).
+- [x] Logs: provider ids, error types and messages, startup time. No activity or notification content is logged. Checklist for future providers: exception messages must not include user content.
+- [x] Tray icon and menus use documented APIs (`Shell_NotifyIcon`, `TrackPopupMenuEx`); the menu takes the foreground only while open, after a user click, and returns it.
+- [x] Tray icon colour reads `HKCU\…\Themes\Personalize\SystemUsesLightTheme` (read-only).
+- [x] New package Serilog / Serilog.Sinks.File: approved in BLUEPRINT §4, pinned, Apache-2.0, recorded in THIRD_PARTY_NOTICES.
+
 ## Findings
 
 | ID | Date | Component | Finding | Severity | Status |

@@ -33,6 +33,8 @@ public partial class IslandWindow : Window
 {
     private const int FocusHotkeyId = 0x4941;
     private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(1000.0 / 30);
+    private static readonly TimeSpan FarPollInterval = TimeSpan.FromMilliseconds(100);
+    private const double NearCursorMargin = 120;
     private static readonly TimeSpan FullscreenInterval = TimeSpan.FromSeconds(1);
     private static readonly TimeSpan MonitorFollowDelay = TimeSpan.FromMilliseconds(500);
     private static readonly TimeSpan FadeDuration = TimeSpan.FromMilliseconds(150);
@@ -69,6 +71,8 @@ public partial class IslandWindow : Window
     private bool _focusMode;
     private nint _focusReturnWindow;
     private bool _hidden;
+    private bool _fullscreenHidden;
+    private bool _userHidden;
     private nint _pendingMonitor;
     private TimeSpan _pendingMonitorSince;
     private string _announcement = string.Empty;
@@ -99,6 +103,11 @@ public partial class IslandWindow : Window
         _fullscreenTimer.Tick += (_, _) => EvaluateFullscreen();
 
         PillContent.MouseLeftButtonUp += OnPillClicked;
+        PillContent.MouseWheel += OnWheel;
+        Bubble.MouseWheel += OnWheel;
+        PillContent.MouseDown += OnPillMouseDown;
+        PillContent.MouseRightButtonUp += OnRightClick;
+        Bubble.MouseRightButtonUp += OnRightClick;
         Bubble.MouseLeftButtonUp += (_, e) =>
         {
             e.Handled = true;
@@ -118,6 +127,18 @@ public partial class IslandWindow : Window
     /// <summary>An animation finished; carries its frame statistics.</summary>
     public event EventHandler<FrameSummary>? AnimationCompleted;
 
+    /// <summary>Mouse wheel over the pill (delta: positive = away from the user). BLUEPRINT §8.5: cycle activities.</summary>
+    public event EventHandler<int>? WheelScrolled;
+
+    /// <summary>Middle click on the pill. BLUEPRINT §8.5: play/pause media.</summary>
+    public event EventHandler? MiddleClicked;
+
+    /// <summary>Right click on the pill or bubble, with the cursor position in screen pixels.</summary>
+    public event EventHandler<(int X, int Y)>? ContextMenuRequested;
+
+    /// <summary>The focus shortcut was pressed while the user had hidden the Island (show it again).</summary>
+    public event EventHandler? HotkeyPressedWhileHidden;
+
     /// <summary>Something shown in the debug panel changed.</summary>
     public event EventHandler? StatusChanged;
 
@@ -129,7 +150,10 @@ public partial class IslandWindow : Window
 
     public bool IsClickThrough => _clickThrough;
 
-    public bool IsHiddenForFullscreen => _hidden;
+    public bool IsHiddenForFullscreen => _fullscreenHidden;
+
+    /// <summary>Hidden by the user ("Hide for 1 hour").</summary>
+    public bool IsUserHidden => _userHidden;
 
     public bool IsFocusMode => _focusMode;
 
@@ -228,7 +252,15 @@ public partial class IslandWindow : Window
 
             case WM_HOTKEY when wParam == FocusHotkeyId:
                 handled = true;
-                ToggleFocusMode();
+                if (_userHidden)
+                {
+                    HotkeyPressedWhileHidden?.Invoke(this, EventArgs.Empty);
+                }
+                else
+                {
+                    ToggleFocusMode();
+                }
+
                 break;
 
             case WM_SETTINGCHANGE:
@@ -332,7 +364,15 @@ public partial class IslandWindow : Window
         var foreground = Win32Shell.DescribeForeground(GetForegroundWindow(), IsIslandWindow);
         var hide = FullscreenPolicy.ShouldHide(
             Win32Shell.QueryNotificationState(), foreground, CurrentMonitor, _options.ShowOverFullscreen);
-        SetHidden(hide);
+        _fullscreenHidden = hide;
+        ApplyHidden();
+    }
+
+    /// <summary>Hides or shows the Island at the user's request ("Hide for 1 hour").</summary>
+    public void SetUserHidden(bool hidden)
+    {
+        _userHidden = hidden;
+        ApplyHidden();
     }
 
     public void ToggleFocusMode()
@@ -383,6 +423,16 @@ public partial class IslandWindow : Window
         var scale = VisualTreeHelper.GetDpi(this).DpiScaleX;
         var point = PlacementCalculator.ScreenToWindowDip(window, scale, x, y);
 
+        // Adaptive polling: 30 Hz near the Island (hover must feel instant), 10 Hz when the cursor is far away.
+        var margin = (int)(NearCursorMargin * scale);
+        var near = _focusMode || _hover.IsExpanded
+            || (x >= window.Left - margin && x < window.Right + margin && y >= window.Top - margin && y < window.Bottom + margin);
+        var interval = near ? PollInterval : FarPollInterval;
+        if (_pollTimer.Interval != interval)
+        {
+            _pollTimer.Interval = interval;
+        }
+
         // The idle pill has no interaction, so it never blocks clicks to the window underneath.
         var over = _presentation.State != IslandBaseState.Idle
             && IslandLayout.IsOverInteractiveArea(_morph.Current, point);
@@ -418,6 +468,28 @@ public partial class IslandWindow : Window
             _hwnd,
             clickThrough ? WS_EX_TRANSPARENT : 0,
             clickThrough ? 0 : WS_EX_TRANSPARENT);
+    }
+
+    private void OnWheel(object sender, MouseWheelEventArgs e)
+    {
+        e.Handled = true;
+        WheelScrolled?.Invoke(this, e.Delta);
+    }
+
+    private void OnPillMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ChangedButton == MouseButton.Middle)
+        {
+            e.Handled = true;
+            MiddleClicked?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    private void OnRightClick(object sender, MouseButtonEventArgs e)
+    {
+        e.Handled = true;
+        var (x, y) = Win32Shell.CursorPosition();
+        ContextMenuRequested?.Invoke(this, (x, y));
     }
 
     private void OnPillClicked(object sender, MouseButtonEventArgs e)
@@ -798,8 +870,9 @@ public partial class IslandWindow : Window
 
     private bool IsIslandWindow(nint hwnd) => hwnd == _hwnd || _ownedWindows.Contains(hwnd);
 
-    private void SetHidden(bool hide)
+    private void ApplyHidden()
     {
+        var hide = _fullscreenHidden || _userHidden;
         if (hide == _hidden)
         {
             return;

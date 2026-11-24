@@ -35,4 +35,5 @@ numbers, user names or any biometric data.
 | 2026-11-24 | DEV-01 | 26300 | same | Focus theft (automated) | Pass | Foreground unchanged across 9 transitions |
 | 2026-11-24 | DEV-01 | 26300 | same | Click-through (WindowFromPoint) | Pass | Alpha-0 pixels pass clicks without `WS_EX_TRANSPARENT`; shadow pixels need the toggle |
 | 2026-11-24 | DEV-01 | 26300 | same | Full screen (borderless covering window) | Pass (run 1), inconclusive later | Later runs: Windows withheld foreground from the probe window |
+| 2026-11-24 | DEV-01 | 26300 | same | Phase 2 self-test (activity engine) | 38 pass / 12 fail / 2 inconclusive | All engine checks pass (arbiter, transient restore, swap, tray, quiet mode, provider isolation/restart). Fails: performance only. `docs/evidence/phase-2-selftest-2026-11-24.json` |
 | | | | 2+ monitors, mixed DPI | Placement, display change, follow cursor | ⏳ | Owner hardware needed (KI-013) |

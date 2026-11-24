@@ -16,9 +16,10 @@ IrisAura is a Windows desktop product with two parts:
 
 ## Project status
 
-**Phase 1 — IrisAura Island shell and motion.** The Island window, animation, click-through,
-placement, full-screen hiding and keyboard access work with *fake* activities; real media,
-system events and the SDK come in Phases 2–5. Progress and test evidence are in
+**Phase 2 — IrisAura Island activity engine.** The Island window (Phase 1) is now driven by the
+activity engine: priorities, split bubble, temporary banners and HUDs, swap and scroll-to-cycle,
+quiet mode, hide for 1 hour, a tray icon with menu, and isolated providers. Activities are still
+*fake* (debug provider); real media, system providers and the SDK come in Phases 3–5. Progress and test evidence are in
 [docs/PROGRESS.md](docs/PROGRESS.md); the full plan is in [docs/BLUEPRINT.md](docs/BLUEPRINT.md).
 
 ### Trying the Island (development build)
@@ -34,7 +35,9 @@ src/IrisAura.Island/bin/Release/net10.0-windows10.0.19041.0/IrisAura.Island.exe 
 | `IrisAura.Island.exe --quit` | Closes the running Island |
 | `IrisAura.Island.exe --selftest report.json` | Runs the integration self-test (focus, click-through, placement, full screen, CPU, frames) and writes a report |
 
-Hover the pill to expand it, click to pin it, press **Ctrl+Alt+Shift+I** to control it from the keyboard (Esc to return).
+Hover the pill to expand it, click to pin it, click the bubble to swap, scroll over the pill to cycle
+activities, right-click the pill or the tray icon for the menu, press **Ctrl+Alt+Shift+I** to control it
+from the keyboard (Esc to return). Logs: `%LocalAppData%\IrisAura\logs`.
 
 ## Honest limits
 

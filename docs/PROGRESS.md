@@ -112,3 +112,65 @@ Run it with `IrisAura.Island.exe --debug` (debug panel), quit with the panel's b
 - `global.json` now selects the latest installed .NET 10 SDK (≥ 10.0.300) because installing Visual Studio 2026 removed SDK 10.0.401 ([ADR 0002](DECISIONS/0002-build-and-test-infrastructure.md)).
 - Settings window and persistence (§8.7) are not part of Phase 1; options live in memory with blueprint defaults and are adjustable in the debug panel.
 - Fixed: Phase 0A lock files still listed `IrisAura.Face.Core` under `IrisAura.Island` (left over from the architecture-test check); regenerated.
+
+---
+
+## Phase 2 — IrisAura Island activity engine
+
+**Branch:** `main` (owner decision: work on `main`) · **Date:** 2026-11-24 · **Status:** ✅ acceptance criteria met (unit tests); integration verified on DEV-01; performance targets from Phase 1 still open.
+
+### Scope delivered (BLUEPRINT §8.5, §10 Phase 2)
+
+- **Activity model** (`Engine/IslandActivity`): §8.5 record plus owner, expiry, pause, sequence, optional rich view; defaults from the §8.5 priority table; custom/SDK priority capped at 60.
+- **ActivityManager**: start / partial update / end / end-with-final-text; provider ownership, duplicate ids, stale (sequenced) updates, TTL expiry (transients from last update), provider-wide end.
+- **PriorityArbiter**: main / bubble / queue; transient preemption and restoration; waiting transients; paused media → queue after 30 s; user preference (swap, wheel cycle); quiet mode (user or Windows quiet time) suppresses notifications only; privacy indicators kept out of the pill; `NextChangeAt` for time-driven re-arrangement.
+- **ActivityProviderHost**: provider isolation (start / action / reported failures disable only that provider and remove its activities; restartable), thread-safe sink marshalled to the UI thread with order-preserving coalescing.
+- **IslandController**: arbiter → presentation, timed refresh, swap / cycle / middle click / buttons routed to the owning provider, quiet mode, hide for 1 hour, persisted state.
+- **Generic activity view + templates**: compact, expanded (title, subtitle, progress, buttons), banner, bubble — used by any activity without a custom view (SDK, HUDs, calls, downloads).
+- **Tray icon + native menus**: right-click the pill or the tray icon → Quiet mode, Hide for 1 hour / Show, Start timer, Settings (disabled until §8.7), Debug panel (debug), Quit. Focus returns to the previous window after the menu.
+- **Window**: mouse wheel, middle click, right click events; user-hidden state separate from full-screen hiding; hotkey shows a hidden Island; adaptive cursor polling (30 Hz near the Island, 10 Hz far away).
+- **Startup**: tray icon and providers start after the first frame.
+- **Persistence**: quiet mode and hide-until in `%LocalAppData%\IrisAura\island-state.json` (no content).
+- **Logging**: Serilog to `%LocalAppData%\IrisAura\logs` (no user content).
+- **Debug provider + panel**: media, timer (incl. 12 s timer promoted to 85), call, download, SDK-style custom, notification, volume HUD, charging, swap, cycle, hide/show, simulated provider failure and restart; live layout and provider states.
+
+### Acceptance criteria (BLUEPRINT §10 Phase 2)
+
+| Criterion | Status | Evidence |
+|---|---|---|
+| Priority ties | ✅ | `PriorityArbiterTests`: start order then id; updates do not reorder ties; transient ties newest first |
+| Transient interruption / restoration | ✅ | Unit: persistent layout kept underneath and restored; low-priority transient still interrupts. Self-test: banner took the pill and the split layout returned after expiry |
+| Expiry | ✅ | `ActivityManagerTests`: transient TTL from last update; persistent TTL from start; end-with-final-text then removal; arbiter `NextChangeAt` |
+| Cancellation | ✅ | End, end-all-from-provider, provider stop; self-test timer cancel path via debug provider |
+| Duplicate ids | ✅ | Same provider → replace (keeps start time); other provider → `IdConflict` for start/update/end |
+| Stale updates | ✅ | Sequenced updates ≤ last ignored; updates after end/while ending ignored (no resurrection) |
+| Provider failures | ✅ | `ProviderHostTests` (start throws, reported failure, action throws, calls after fault ignored, restart). Self-test: debug provider failure → faulted, its activities removed, Island idle, restart works |
+
+Tests: **138 unit tests** (was 83), all passing; build 0 warnings; native x64 builds.
+
+### Self-test on DEV-01 (`docs/evidence/phase-2-selftest-2026-11-24.json`)
+
+38 pass, 12 fail, 2 inconclusive. All functional checks pass: arbiter placement, transient takeover and restore, swap, tray icon, quiet mode, provider failure isolation and restart, reduced motion, click-through, placement, display/work-area changes, focus never taken (10/10).
+
+| Metric (BLUEPRINT §8.8) | Target | Phase 2 measurements (machine load) | Result |
+|---|---|---|---|
+| Idle CPU | < 0.3 % | 0.117 % final run (18 %); 0.12–0.51 % across 12 runs | ✅ final / borderline |
+| CPU media + waveform | < 1.5 % | 1.521 % final run (22 %); 1.37–2.11 % across 12 runs | ❌ borderline (Phase 1: 0.66–3.5 %) |
+| RAM | < 120 MB | 87 MB working set | ✅ |
+| Startup to first paint | ≤ 800 ms | 1757 ms final; 1288–2361 ms across runs | ❌ (KI-012) |
+| Animation | 60 fps, no drops | 54–58 fps average; 1–3 frames > 25 ms per transition | ❌ (KI-011) |
+
+### Owner checks
+
+1. Right-click the pill (with an activity showing) and the tray icon: the menu appears, focus returns to your app afterwards, Quiet mode / Hide for 1 hour / Quit work.
+2. With two activities showing, click the bubble (swap) and scroll the wheel over the pill (cycle).
+3. Hide for 1 hour, then press `Ctrl+Alt+Shift+I`: the Island comes back.
+4. Light and dark taskbar: the tray icon is visible in both.
+5. Everything from the Phase 1 owner checks, plus a quiet-machine `--selftest`.
+
+### Deviations (recorded in [ADR 0005](DECISIONS/0005-activity-engine.md))
+
+- Tray icon added (needed to reach the menu while idle or hidden). Settings item disabled until §8.7.
+- "Start timer" uses the debug timer until the timer provider (Phase 4).
+- `Navigation` priority 55 (not in the §8.5 table).
+- Queue reachable by mouse wheel / cycle; the "swipe in expanded view" gesture is not implemented (mouse-first desktop).
