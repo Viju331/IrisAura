@@ -28,6 +28,16 @@ named reviewer, a date and linked evidence. Independent review means someone oth
 - [x] Biometric datasets path (`tests/datasets/`) ignored by git.
 - [x] Native hardening verified in the x64 Release build (2026-11-24, `dumpbin`): Control Flow Guard, CET compatible, high-entropy ASLR, NX; static CRT (only `KERNEL32.dll` imported); /W4 /WX clean; exports limited to `DllCanUnloadNow`/`DllGetClassObject`. ARM64 pending KI-010.
 
+### Phase 1 (Island shell) — self-review, 2026-11-24
+
+- [x] No input injection or keystroke simulation. `SetForegroundWindow` is used only (a) in keyboard focus mode after the user's own hotkey and (b) to hand focus back to the window the user came from; the self-test also uses it on its own probe windows.
+- [x] Only documented Win32 APIs (`SetWinEventHook` out-of-context, `RegisterHotKey`, `SHQueryUserNotificationState`, `GetMonitorInfo`, `GetDpiForMonitor`, window styles). No undocumented APIs, no hooks into other processes.
+- [x] The WinEvent native callback catches every exception (none crosses the native boundary).
+- [x] No network, telemetry, file writes or logging of content. The only file written is the self-test report, to a path the user passes.
+- [x] Fake activities read no system data (no media sessions, notifications or devices yet).
+- [x] Island projects still reference no Face project (architecture tests).
+- [x] Same-session named events (`Local\IrisAura.Island.Quit`, `…ShowDebug`) accepted as low risk: only processes of the same user/session can signal them (THREAT_MODEL T-15).
+
 ## Findings
 
 | ID | Date | Component | Finding | Severity | Status |

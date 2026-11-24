@@ -7,6 +7,8 @@
     <AssemblyName>IrisAura.Island</AssemblyName>
     <RootNamespace>IrisAura.Island</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- Required by source-generated [LibraryImport] Win32 interop (Interop/NativeMethods.cs). -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>

@@ -57,6 +57,10 @@ public sealed class ThemeTests
     [InlineData("Aura.Glyph.FaceBrackets")]
     [InlineData("Aura.Glyph.FacePerson")]
     [InlineData("Aura.Glyph.Check")]
+    [InlineData("Aura.Glyph.Play")]
+    [InlineData("Aura.Glyph.Pause")]
+    [InlineData("Aura.Glyph.Previous")]
+    [InlineData("Aura.Glyph.Next")]
     public void Glyph_fits_the_24_unit_design_grid(string key)
     {
         StaThread.Run(() =>

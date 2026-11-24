@@ -711,7 +711,7 @@ stateDiagram-v2
 - Extended styles: `WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE`. The Island never steals focus or appears in Alt+Tab.
 
 **Performance trick — do not resize the window every frame:**
-1. Create the window once at the **maximum expanded size** (for example 440×240 plus a shadow margin), top-centre of the screen.
+1. Create the window once at the **maximum expanded size** plus spring overshoot and a shadow margin (implemented: 480 × 250 DIP, ADR 0004), top-centre of the screen.
 2. Animate only the inner pill `Border` (Width, Height, CornerRadius) with springs.
 3. Make everything outside the pill **click-through**, in two layers:
    - **Layered-window alpha (free):** `AllowsTransparency=True` makes WPF create a per-pixel-alpha layered window (`WS_EX_LAYERED`). Windows already passes mouse input through pixels whose alpha is exactly 0 to whatever window is underneath, in any process.
@@ -746,7 +746,8 @@ stateDiagram-v2
 Setting: "show over full-screen video" (off by default).
 
 **Other details:**
-- **Shadow:** a soft `DropShadowEffect` on the pill, or a pre-rendered blurred image for performance.
+- **Shadow:** a soft shadow that is cheap to redraw. Phase 1 measured `DropShadowEffect` at 4–8× the CPU of no shadow in a layered window (every waveform update re-rasterises the blur), so the Island draws a few concentric translucent rounded rectangles instead (`PillShadow`, ADR 0004).
+- **Idle pill:** stays click-through (it has no click action), so it never blocks title bars or browser tabs underneath; hover is polled, so hovering still works.
 - **Theme:** the pill is always black (`Aura.Void`, `#000000`) with `Aura.Frost` and `Aura.Mist` text. The accent comes from the album art or the app's colour; if there is none, use `Aura.Blue`. Brand tokens are defined in §0.4.
 - **Accessibility:**
   - Respect "Animation effects" off (`SPI_GETCLIENTAREAANIMATION`) by using cross-fades instead of springs.
@@ -933,7 +934,7 @@ await session.TryChangePlaybackPositionAsync(ticks); // seek
 #### 8.6.6 Bluetooth devices ("AirPods connected")
 
 - `DeviceWatcher` with `BluetoothDevice.GetDeviceSelectorFromConnectionStatus(BluetoothConnectionStatus.Connected)` and the BLE equivalent.
-  - `Added` / `Updated` events → show "<name> connected" with an icon chosen from the device class (headphones, mouse, keyboard, phone).
+  - `Added` / `Updated` events → show "`<device name>` connected" with an icon chosen from the device class (headphones, mouse, keyboard, phone).
 - **Battery level ⚠ VERIFY:**
   - Windows shows battery for some headsets through a device property (the Bluetooth battery DEVPKEY).
   - Read it with `DeviceInformation.CreateFromIdAsync(id, new[]{ "<battery property key>" })`.
@@ -1091,6 +1092,8 @@ The Island owns its settings window, opened from the tray icon or right-click me
 | Hover → expand latency | ≤ 200 ms |
 | Song change → UI update | ≤ 300 ms |
 | Startup at logon | ≤ 800 ms to first paint |
+
+**How to measure:** `IrisAura.Island.exe --selftest report.json` (Release build, other apps closed). CPU is the median of three 10 s samples after a 5 s warm-up, as a share of all logical processors, reported with whole-machine load; a frame interval over 25 ms (1.5 × the 60 fps budget) counts as dropped. Single samples on a busy machine vary several-fold (ADR 0004).
 
 ### 8.9 IrisAura Island failure handling
 

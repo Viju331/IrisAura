@@ -46,3 +46,6 @@ logs/
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# Editor-local settings
+.vscode/
