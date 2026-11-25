@@ -1142,6 +1142,25 @@ See §10, Phases 1–5. The Island build is independent of custom Windows sign-i
 - **Accessibility:** Narrator reads the activity; animations reduced when Windows animations are off.
 - **Soak test:** 8 hours of continuous media playback. Check for memory leaks (dotMemory or PerfView).
 
+### 8.13A Expanded panel redesign (owner request 2026-11-25; build after Phase 4 as Phase 4B)
+
+The owner chose a dashboard-style expanded panel, inspired by notch apps on other platforms, in IrisAura's own
+look (brand tokens §0.4, original glyphs §0.5; no copied layout details or assets from other products).
+
+| Decision | Choice |
+|---|---|
+| Shape | Keep the **floating pill** (6 DIP below the top, rounded all round); only the expanded panel changes |
+| Timing | **After Phase 4**, so the system providers are built first and redesigned together |
+| Expanded panel | Wider dashboard with **tabs**: "Island" (widgets) and "Tray" (files) |
+| Widget: media card | Large album art with source-app badge, title / artist / album, controls, progress (Phase 3 data) |
+| Widget: calendar strip | Month and a row of days with today highlighted; events ("Nothing for today") only after calendar access with the user's consent (`Windows.ApplicationModel.Appointments`, needs package identity — §8.6.9 sparse package) ⚠ VERIFY |
+| Tab: file tray | §8.6.12 file shelf: drop files to keep shortcuts, drag them out later, clear in one click |
+| Widget: camera mirror | Round live webcam preview. **Opt-in, off by default**, only while the panel is open; the camera light and the privacy indicator (§8.6.7) are on while it shows; no frames stored or sent; uses the same camera-in-use rules as §8.6.7 |
+| Bluetooth devices | "Device connected" activity for headphones (e.g. AirPods) with device icon and battery **when Windows exposes it** (§8.6.6 ⚠ VERIFY — AirPods often do not report battery on Windows); our own icon and animation, no Apple artwork |
+
+The redesign must keep the §8.8 performance budget (cache static images, §ADR 0006) and the focus, click-through and
+full-screen rules of §8.3.
+
 ### 8.13 Naming and trademarks
 
 - Apple's "Dynamic Island" and "Face ID" are Apple product names/trademarks. Ship under the IrisAura brand (§0): **IrisAura**, **IrisAura Island** and **IrisAura Face**. Use comparative wording only in internal planning where appropriate; have counsel review external marketing claims.
@@ -1264,6 +1283,13 @@ A solo developer should normally do 0A, then Island Phases 1–5, and fit 0B/0C 
 - Add notifications only after package identity, permission UX, privacy handling, and Windows build compatibility are proven.
 - Keep call detection explicitly labelled heuristic/beta. Do not infer a call from microphone use alone without corroborating evidence.
 - **Acceptance:** each provider can be independently disabled/restarted; missing API/device support degrades gracefully; notification content is not persisted by default.
+
+### Phase 4B: IrisAura Island expanded panel redesign (owner request; 1–2 weeks)
+
+- Build the §8.13A dashboard panel: tabs (Island / Tray), large media card, calendar strip, file tray, opt-in camera
+  mirror, Bluetooth device activity in the new design.
+- **Acceptance:** §8.8 budgets still met (measured), focus/click-through/full-screen tests still pass, camera mirror off
+  by default with the camera released when the panel closes, no calendar or camera access without user consent.
 
 ### Phase 5: IrisAura Island SDK and standalone release (1–2 weeks)
 
