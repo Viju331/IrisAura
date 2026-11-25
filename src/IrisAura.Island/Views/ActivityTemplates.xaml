@@ -389,10 +389,19 @@
   <!-- Tone (brand tokens only, BLUEPRINT §0.4): Success = Aura.Cyan (charging, connected, done), Alert = Aura.Error
        (low battery, timer finished). -->
   <DataTemplate x:Key="GenericGlyph">
-    <Viewbox Width="16" Height="16">
-      <Path x:Name="Glyph" Width="24" Height="24" Stretch="None" Fill="{StaticResource Aura.Frost}"
-            Data="{Binding LeadingGlyph, Converter={StaticResource GlyphKey}}" />
-    </Viewbox>
+    <Grid>
+      <Viewbox Width="16" Height="16" Visibility="{Binding HasLeadingImage, Converter={StaticResource InverseBoolToVisibility}}">
+        <Path x:Name="Glyph" Width="24" Height="24" Stretch="None" Fill="{StaticResource Aura.Frost}"
+              Data="{Binding LeadingGlyph, Converter={StaticResource GlyphKey}}" />
+      </Viewbox>
+      <!-- An SDK app's own icon (§8.6.14), rounded, cached as a bitmap. -->
+      <Border Width="18" Height="18" CornerRadius="4" CacheMode="BitmapCache"
+              Visibility="{Binding HasLeadingImage, Converter={StaticResource BoolToVisibility}}">
+        <Border.Background>
+          <ImageBrush ImageSource="{Binding LeadingImage}" Stretch="UniformToFill" />
+        </Border.Background>
+      </Border>
+    </Grid>
     <DataTemplate.Triggers>
       <DataTrigger Binding="{Binding Tone}" Value="Success">
         <Setter TargetName="Glyph" Property="Fill" Value="{StaticResource Aura.Cyan}" />

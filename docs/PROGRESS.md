@@ -391,3 +391,65 @@ success/alert); 15 new original glyphs (no Bluetooth logo); `--system-probe` dia
 - Calendar shows dates only (events need KI-026's package identity and consent).
 - The panel's waveform runs at 15 Hz (CPU budget).
 - Microphone/camera app list still in the menu, not the panel (KI-034).
+
+---
+
+## Phase 5 — IrisAura Island SDK and standalone release
+
+**Branch:** `main` · **Date:** 2026-11-25 · **Status:** ✅ SDK, CLI, sample and docs implemented and tested (unit + end-to-end with a development-signed Island). **Release 1 gate open** (installer and production signing are Phase 9 work, KI-039); independent review of the SDK pipe pending (KI-041).
+
+### Scope delivered (BLUEPRINT §8.6.14, §10 Phase 5; ADR 0009; [ISLAND_SDK.md](ISLAND_SDK.md))
+
+- **Per-user pipe** `\\.\pipe\IrisAura.Island.Activities.<SID>`: DACL user only + NETWORK denied, first-instance
+  creation (squatted name → SDK unavailable), 16 clients, 64 KB lines, 20-error disconnect, 2 s write timeout.
+- **Protocol v1**: `start` / `update` (merge) / `end` / `query` → `hello`, `action`, `activities`, `error` with codes;
+  replies in order so clients can confirm.
+- **App identity / ACL model**: program path from the OS + app name; per-identity ids, limits and blocking; the
+  "External apps" menu lists apps and blocks/unblocks them (saved).
+- **Rules**: 10 updates/s per activity, 5 activities per app, priority 10–60, TTL 1 h default (≤ 24 h), sanitised
+  text, icons ≤ 128 × 128, ≤ 3 buttons, safe `openUri` schemes; activities outlive the connection.
+- **Action callbacks**: button presses and clicks go back to the app's newest connection.
+- **Client library** `IrisAura.Island.Sdk` (netstandard2.0): connect + server verification (name, session,
+  Authenticode with known publisher or pinned thumbprint; development mode for unsigned builds), confirmed
+  start/update/end, `ActionReceived`, `QueryAsync`.
+- **CLI** `irisaura-island` (push / update / end / list / watch; stable exit codes).
+- **Sample** `samples/IrisAura.Island.SampleApp` (progress + Cancel button).
+- `scripts/sdk-e2e.ps1` (development-signed end-to-end run); fix: `new-dev-cert.ps1` did not parse in Windows
+  PowerShell 5.1.
+
+### Acceptance criteria (BLUEPRINT §10 Phase 5)
+
+| Criterion | Status | Evidence |
+|---|---|---|
+| Untrusted local process tests | ✅ | Another app (other program, or same program under another name) cannot see/update/end (`SdkTests`, e2e `otherAppCannotEnd`); fake pipe server refused by the client in both verification modes; squatted pipe name disables the SDK; pipe DACL test |
+| Malformed / oversized message tests | ✅ | Bad JSON, JSON arrays, wrong version → errors; 20 errors in a row → disconnect; a 64 KB+ line → connection closed while other clients keep working |
+| Rate-limit tests | ✅ | 10/s per activity (unit and over the pipe), 5 activities per app, expired ones free their slot |
+| Reconnect tests | ✅ | Activity survives the client exiting; a new connection with the same identity updates it and receives its button presses |
+| A test build signed with the development certificate passes | ✅ | `docs/evidence/phase-5-sdk-e2e-2026-11-25.json`: 10/10 — pinned dev-signed Island accepted (push/update/list/end), default check refuses it (`0x800B0109` untrusted root) and the unsigned build; `file:` link refused; development certificate in **no** trusted store |
+| Release 1 gate (MSI install/upgrade/uninstall, production signing) | ⏳ | Phase 9 Island subset; certificate purchase by the owner (KI-039, KI-040) |
+
+### Tests and evidence
+
+- **325 unit tests** (was 287; 38 new SDK tests), stable over repeated runs.
+- End to end on DEV-01: `scripts/sdk-e2e.ps1` 10/10; the sample app showed "Sample Deploy · 30%" on the live Island
+  and finished with "Deployed ✓".
+- Self-test with the SDK provider registered: 58 pass / 13 fail / 2 inconclusive
+  (`docs/evidence/phase-5-selftest-2026-11-25.json`, machine load 43–91 % from other apps): SDK provider running, no
+  provider failed; idle CPU 0.117 % (with all providers 0.117 %), media + waveform 0.858 %, panel open 0.976 %,
+  working set 119 MB. Fails are the known startup (3086 ms under that load, KI-012) and dropped-frame items (KI-011).
+
+### Owner checks
+
+1. `irisaura-island push --app Test --id demo --title "Hello from a script" --progress 0.4 --text 40% --allow-unsigned-island`
+   (development build), then `update`, `end`.
+2. Run the sample (`dotnet run --project samples/IrisAura.Island.SampleApp -- --allow-unsigned-island`), hover the
+   Island and press Cancel.
+3. Right-click → External apps: untick "Sample Deploy" and run the sample again (it is refused); tick it again.
+4. Decide the code-signing route for Release 1 (BLUEPRINT §12.4) and arrange the independent review of the SDK pipe.
+
+### Deviations (ADR 0009)
+
+- Protocol additions: `hello`, `query`/`activities`, error codes; `app` may accompany any message.
+- Activities outlive connections (TTL default 1 h); button presses are delivered only to a connected client.
+- CLI hand-parsed (no System.CommandLine).
+- The default client check accepts only pinned thumbprints until the production publisher exists.

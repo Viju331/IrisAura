@@ -13,6 +13,7 @@ using IrisAura.Island.Providers.Hud;
 using IrisAura.Island.Providers.Media;
 using IrisAura.Island.Providers.Power;
 using IrisAura.Island.Providers.Privacy;
+using IrisAura.Island.Providers.Sdk;
 using IrisAura.Island.Providers.Timers;
 using IrisAura.Island.Shell;
 using IrisAura.Island.Views;
@@ -171,6 +172,13 @@ public partial class App : Application
         Add(_timers);
         Add(new DownloadsProvider());
         Add(new CallProvider(_capabilities, new AudioSessionActivity()), enabledByDefault: false); // beta (§8.6.8)
+
+        // Activity SDK (§8.6.14): the per-user pipe. The self-test uses its own pipe name so it never collides with
+        // (or is mistaken for) a running Island.
+        var sdk = new SdkActivityProvider(
+            settings.SdkBlockedApps,
+            selfTestPath is null ? null : () => $"IrisAura.Island.SelfTest.{Environment.ProcessId}");
+        Add(sdk);
         var levels = _levels;
         _controller = new IslandController(
             _island,
@@ -187,6 +195,12 @@ public partial class App : Application
             settingsStore)
         { DebugMenuEnabled = debug, TimerProviderId = TimerProvider.ProviderId };
         _controller.HiddenProviders.Add(DebugActivityProvider.ProviderId);
+        _controller.SdkApps = () => sdk.Apps;
+        _controller.SetSdkAppBlocked = (key, blocked) =>
+        {
+            sdk.SetBlocked(key, blocked);
+            _controller.SaveSettings(s => s with { SdkBlockedApps = [.. sdk.BlockedApps] });
+        };
 
         // Dashboard panel (Phase 4B): file tray persisted next to the other state; camera mirror off unless switched on.
         _controller.Dashboard = new DashboardView(

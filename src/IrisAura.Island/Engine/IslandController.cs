@@ -25,6 +25,7 @@ public sealed class IslandController : IDisposable
     private const int MenuPanel = 7;
     private const int MenuTimerBase = 100;
     private const int MenuProviderBase = 200;
+    private const int MenuSdkAppBase = 300;
     private static readonly int[] TimerMinutes = [1, 5, 10, 25];
 
     private readonly IslandWindow _window;
@@ -35,6 +36,7 @@ public sealed class IslandController : IDisposable
     private readonly TimeProvider _time;
     private readonly DispatcherTimer _timer;
     private readonly Dictionary<string, IActivityViewModel> _views = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Type?> _viewPayloads = new(StringComparer.Ordinal);
     private readonly Func<IslandActivity, IActivityViewModel?>? _viewFactory;
     private TrayIcon? _tray;
     private IslandState _state;
@@ -116,6 +118,12 @@ public sealed class IslandController : IDisposable
 
     /// <summary>Provider that handles "Start timer"; the item is disabled while it is not running.</summary>
     public string TimerProviderId { get; set; } = "timers";
+
+    /// <summary>Apps that used the SDK (External apps menu); <see langword="null"/> hides the menu.</summary>
+    public Func<IReadOnlyList<Providers.Sdk.SdkAppInfo>>? SdkApps { get; set; }
+
+    /// <summary>Blocks (true) or unblocks an SDK app by key.</summary>
+    public Action<string, bool>? SetSdkAppBlocked { get; set; }
 
     /// <summary>Providers the user does not switch in the Activities menu (the debug provider).</summary>
     public ISet<string> HiddenProviders { get; } = new HashSet<string>(StringComparer.Ordinal);
@@ -249,16 +257,19 @@ public sealed class IslandController : IDisposable
             return custom;
         }
 
-        // A data payload (e.g. media state) gets a rich view from the factory; everything else the generic view.
-        var wantsRich = activity.View is not null;
-        if (_views.TryGetValue(activity.Id, out var view) && (view is GenericActivityView) != wantsRich)
+        // A data payload (e.g. media state) gets a rich view from the factory; everything else (including payloads the
+        // factory does not know, such as SDK visuals) the generic view. The view is kept and updated in place while the
+        // payload type stays the same, so updates never rebuild it (no cross-fade per update).
+        var payload = activity.View?.GetType();
+        if (_views.TryGetValue(activity.Id, out var view) && _viewPayloads.GetValueOrDefault(activity.Id) == payload)
         {
             view.Apply(activity);
             return view;
         }
 
-        view = (wantsRich ? _viewFactory?.Invoke(activity) : null) ?? new GenericActivityView(activity, InvokeAction);
+        view = (activity.View is not null ? _viewFactory?.Invoke(activity) : null) ?? new GenericActivityView(activity, InvokeAction);
         _views[activity.Id] = view;
+        _viewPayloads[activity.Id] = payload;
         return view;
     }
 
@@ -315,6 +326,7 @@ public sealed class IslandController : IDisposable
         var a = e.Activity;
         if (e.Change == ActivityChange.Ended)
         {
+            _viewPayloads.Remove(a.Id);
             if (_views.Remove(a.Id, out var removed) && removed is IDisposable disposable)
             {
                 disposable.Dispose();
@@ -407,6 +419,7 @@ public sealed class IslandController : IDisposable
     {
         var hidden = IsHiddenByUser;
         var providers = _host.Providers;
+        var sdkApps = SdkApps?.Invoke() ?? [];
         var timersRunning = _host.Status(TimerProviderId)?.State == ProviderState.Running;
         var items = new List<MenuItemSpec>();
         var privacy = PrivacyMenuItems().ToList();
@@ -424,6 +437,12 @@ public sealed class IslandController : IDisposable
             new(0, "Start timer", Enabled: timersRunning,
                 Children: TimerMinutes.Select(m => new MenuItemSpec(MenuTimerBase + m, $"{m} min")).ToList()),
             new(0, "Activities", Children: ProviderMenuItems(providers)),
+            new(0, "External apps", Enabled: sdkApps.Count > 0, Children: sdkApps.Count == 0
+                ? [new MenuItemSpec(0, "No apps yet", Enabled: false)]
+                : sdkApps.Select((a, i) => new MenuItemSpec(
+                    MenuSdkAppBase + i,
+                    $"{a.Display}{(a.Connected ? " · connected" : string.Empty)}{(a.Activities > 0 ? $" · {a.Activities} shown" : string.Empty)}",
+                    Checked: !a.Blocked)).ToList()),
             MenuItemSpec.Separator,
             new(MenuSettings, "Settings (coming in a later update)", Enabled: false),
         ]);
@@ -461,6 +480,10 @@ public sealed class IslandController : IDisposable
             case MenuQuit:
                 QuitRequested?.Invoke(this, EventArgs.Empty);
                 break;
+            case >= MenuSdkAppBase when command - MenuSdkAppBase < sdkApps.Count:
+                var sdkApp = sdkApps[command - MenuSdkAppBase];
+                SetSdkAppBlocked?.Invoke(sdkApp.Key, !sdkApp.Blocked); // ticked = allowed
+                break;
             case >= MenuProviderBase when command - MenuProviderBase < providers.Count:
                 var provider = providers[command - MenuProviderBase];
                 var retry = provider.IsEnabled && provider.State is ProviderState.Faulted or ProviderState.Unavailable;
@@ -470,6 +493,13 @@ public sealed class IslandController : IDisposable
                 StartTimerRequested?.Invoke(this, TimeSpan.FromMinutes(command - MenuTimerBase));
                 break;
         }
+    }
+
+    /// <summary>Changes and saves settings (used by the App for options owned by providers).</summary>
+    public void SaveSettings(Func<IslandSettings, IslandSettings> change)
+    {
+        _settings = change(_settings);
+        _settingsStore?.Save(_settings);
     }
 
     /// <summary>

@@ -10,7 +10,7 @@ named reviewer, a date and linked evidence. Independent review means someone oth
 | Pre-logon camera feasibility (A/B/C outcome) | 0B | Phase 8 | | | ⏳ | |
 | Credential Provider feasibility + recovery | 0C | Phase 8 | | | ⏳ | |
 | Account-type support matrix + credential lifecycle design | 0C | Phase 8 | | | ⏳ | |
-| Island SDK pipe security (ACL, squatting, impersonation, rate limits) | 5 | Release 1 | | | ⏳ | |
+| Island SDK pipe security (ACL, squatting, impersonation, rate limits) | 5 | Release 1 | self-review only; **independent reviewer needed** | 2026-11-25 | ⏳ self-review passed | ADR 0009, `SdkTests`, `docs/evidence/phase-5-sdk-e2e-2026-11-25.json` |
 | Presentation-attack evaluation methodology | 7 | Phase 8 | | | ⏳ | |
 | Independent security review of sign-in prototype | 8 | Any external pilot | | | ⏳ | |
 | Legal / privacy review | 8, 9 | Any external pilot / release | | | ⏳ | |
@@ -90,6 +90,23 @@ named reviewer, a date and linked evidence. Independent review means someone oth
 - [x] Focus: panel open/close and tab changes took no focus (self-test); the panel's buttons work without activation
       (`WS_EX_NOACTIVATE` kept).
 - [x] No new packages. Only documented APIs (`Windows.Media.Capture`, `SHGetFileInfo`, WPF drag and drop).
+
+### Phase 5 (Activity SDK) — self-review, 2026-11-25
+
+- [x] Pipe DACL: current user only, NETWORK denied, inheritance off (test reads the ACL); first instance with
+      `FILE_FLAG_FIRST_PIPE_INSTANCE`; a squatted name disables the SDK instead of sharing it (test).
+- [x] Client identity from the OS (`GetNamedPipeClientProcessId`, `QueryFullProcessImageName`, session check), never
+      from the message; ids namespaced per identity; another app cannot see/update/end (tests + e2e).
+- [x] Limits: 64 KB lines (connection closed), 20-error disconnect, 10 updates/s/activity, 5 activities/app,
+      priority 10–60, TTL ≤ 24 h, ≤ 3 buttons, icon ≤ 128 × 128 from the header before decoding, text sanitised.
+- [x] Links: scheme policy, opened only after the user's click (T-27).
+- [x] Client verifies the server (name, session, Authenticode with pinned/known publisher); no network in the check;
+      development certificate pinned, **not** added to any trusted store (e2e report: `devCertificateInTrustedStores:
+      false`).
+- [x] Logs: program file names, error codes, counts; no activity text, icons or links.
+- [x] New packages for the netstandard2.0 SDK only: System.Text.Json 10.0.15 and System.Security.Principal.Windows
+      5.0.0 (approved in BLUEPRINT §4, MIT); DEPENDENCIES and THIRD_PARTY_NOTICES updated.
+- [ ] **Independent review** of the SDK pipe before Release 1 (gate above).
 
 ## Findings
 

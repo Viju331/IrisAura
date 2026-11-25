@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- irisaura-island.exe: push activities from scripts (BLUEPRINT §8.6.14). Implemented in Phase 5.
-       Ships with IrisAura Island, not with the Face components. -->
+  <!-- irisaura-island.exe: push activities from scripts (BLUEPRINT §8.6.14). Ships with IrisAura Island, not with
+       the Face components. Uses the netstandard2.0 client library. -->
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <AssemblyName>irisaura-island</AssemblyName>
@@ -9,5 +9,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\IrisAura.Contracts\IrisAura.Contracts.csproj" />
+    <ProjectReference Include="..\IrisAura.Island.Sdk\IrisAura.Island.Sdk.csproj" />
   </ItemGroup>
 </Project>

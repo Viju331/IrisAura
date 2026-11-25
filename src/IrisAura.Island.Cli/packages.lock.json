@@ -4,6 +4,12 @@
     "net10.0-windows10.0.19041": {
       "irisaura.contracts": {
         "type": "Project"
+      },
+      "irisaura.island.sdk": {
+        "type": "Project",
+        "dependencies": {
+          "IrisAura.Contracts": "[1.0.0, )"
+        }
       }
     }
   }

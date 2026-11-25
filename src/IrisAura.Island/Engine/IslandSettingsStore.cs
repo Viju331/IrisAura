@@ -13,6 +13,9 @@ public sealed record IslandSettings
     /// <summary>Provider id → enabled. Providers not listed use their default.</summary>
     public Dictionary<string, bool> Providers { get; init; } = new(StringComparer.Ordinal);
 
+    /// <summary>SDK apps the user blocked (exe path + app name keys; §8.7 "SDK: block an app").</summary>
+    public List<string> SdkBlockedApps { get; init; } = [];
+
     /// <summary>Camera mirror in the panel (§8.13A): off until the user turns it on.</summary>
     public bool CameraMirror { get; init; }
 
@@ -51,7 +54,11 @@ public sealed class IslandSettingsStore(string path)
             var loaded = JsonSerializer.Deserialize<IslandSettings>(File.ReadAllText(path), JsonOptions);
             return loaded is null
                 ? new IslandSettings()
-                : loaded with { Providers = new Dictionary<string, bool>(loaded.Providers ?? [], StringComparer.Ordinal) };
+                : loaded with
+                {
+                    Providers = new Dictionary<string, bool>(loaded.Providers ?? [], StringComparer.Ordinal),
+                    SdkBlockedApps = loaded.SdkBlockedApps ?? [],
+                };
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
         {

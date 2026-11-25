@@ -1,11 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- Client library other apps use to publish activities (BLUEPRINT §8.6.14). Implemented in Phase 5.
-       netstandard2.0 so .NET Framework apps can use it. System.Text.Json and
-       System.Security.Principal.Windows are added in Phase 5 (approved for this target only). -->
+  <!-- Client library other apps use to publish activities (BLUEPRINT §8.6.14). netstandard2.0 so .NET Framework
+       apps can use it. Depends only on IrisAura.Contracts, System.Text.Json and System.Security.Principal.Windows
+       (approved for netstandard2.0 targets, BLUEPRINT §4). -->
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>IrisAura.Island.Sdk</RootNamespace>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" />
+    <PackageReference Include="System.Security.Principal.Windows" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="IrisAura.Island.Tests" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\IrisAura.Contracts\IrisAura.Contracts.csproj" />

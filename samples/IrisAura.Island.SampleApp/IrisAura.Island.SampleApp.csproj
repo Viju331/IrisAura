@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Sample: how an app shows its own activity on IrisAura Island with IrisAura.Island.Sdk (BLUEPRINT §8.6.14).
+       Not shipped. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>IrisAura.Island.SampleApp</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\IrisAura.Island.Sdk\IrisAura.Island.Sdk.csproj" />
+  </ItemGroup>
+</Project>

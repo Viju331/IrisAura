@@ -1,0 +1,126 @@
+﻿{
+    "tool":  "scripts/sdk-e2e.ps1",
+    "timestamp":  "2026-11-25T18:06:03.9930969+05:30",
+    "windowsBuild":  "10.0.26300.0",
+    "devCertificateInTrustedStores":  false,
+    "checks":  [
+                   {
+                       "check":  "pinnedPush",
+                       "expectedExit":  0,
+                       "actualExit":  0,
+                       "pass":  true
+                   },
+                   {
+                       "check":  "pinnedUpdate",
+                       "expectedExit":  0,
+                       "actualExit":  0,
+                       "pass":  true
+                   },
+                   {
+                       "check":  "pinnedList",
+                       "expectedExit":  0,
+                       "actualExit":  0,
+                       "pass":  true
+                   },
+                   {
+                       "check":  "otherAppCannotEnd",
+                       "expectedExit":  4,
+                       "actualExit":  4,
+                       "pass":  true
+                   },
+                   {
+                       "check":  "badLinkRefused",
+                       "expectedExit":  4,
+                       "actualExit":  4,
+                       "pass":  true
+                   },
+                   {
+                       "check":  "defaultRefusesDevSigned",
+                       "expectedExit":  3,
+                       "actualExit":  3,
+                       "pass":  true
+                   },
+                   {
+                       "check":  "pinnedEnd",
+                       "expectedExit":  0,
+                       "actualExit":  0,
+                       "pass":  true
+                   },
+                   {
+                       "check":  "listAfterEnd",
+                       "expectedExit":  0,
+                       "actualExit":  0,
+                       "pass":  true
+                   },
+                   {
+                       "check":  "defaultRefusesUnsigned",
+                       "expectedExit":  3,
+                       "actualExit":  3,
+                       "pass":  true
+                   },
+                   {
+                       "check":  "devFlagAcceptsUnsigned",
+                       "expectedExit":  0,
+                       "actualExit":  0,
+                       "pass":  true
+                   }
+               ],
+    "results":  {
+                    "signature":  {
+                                      "status":  "UnknownError",
+                                      "signer":  "CN=IrisAura Development",
+                                      "thumbprint":  "C418F23713526F12F5715DA3B1ACEC6477CD468C"
+                                  },
+                    "pinnedPush":  {
+                                       "args":  "push --id e2e --title SDK end-to-end --progress 0.25 --text 25% --button stop=Stop --app E2E Test --trust-thumbprint C418F23713526F12F5715DA3B1ACEC6477CD468C",
+                                       "exit":  0,
+                                       "output":  ""
+                                   },
+                    "pinnedUpdate":  {
+                                         "args":  "update --id e2e --progress 0.75 --text 75% --app E2E Test --trust-thumbprint C418F23713526F12F5715DA3B1ACEC6477CD468C",
+                                         "exit":  0,
+                                         "output":  ""
+                                     },
+                    "pinnedList":  {
+                                       "args":  "list --app E2E Test --trust-thumbprint C418F23713526F12F5715DA3B1ACEC6477CD468C",
+                                       "exit":  0,
+                                       "output":  "e2e"
+                                   },
+                    "otherAppCannotEnd":  {
+                                              "args":  "end --id e2e --app Someone Else --trust-thumbprint C418F23713526F12F5715DA3B1ACEC6477CD468C",
+                                              "exit":  4,
+                                              "output":  "irisaura-island: not-found: No such activity (never started, ended or expired)."
+                                          },
+                    "badLinkRefused":  {
+                                           "args":  "push --id link --title x --open-uri file:///C:/Windows/System32/calc.exe --app E2E Test --trust-thumbprint C418F23713526F12F5715DA3B1ACEC6477CD468C",
+                                           "exit":  4,
+                                           "output":  "irisaura-island: bad-request: openUri must be an http(s) link or the app\u0027s own scheme (file, script and system schemes are not allowed)"
+                                       },
+                    "defaultRefusesDevSigned":  {
+                                                    "args":  "list --app E2E Test",
+                                                    "exit":  3,
+                                                    "output":  "irisaura-island: refusing to send: IrisAura.Island.exe signature check failed (0x800B0109)."
+                                                },
+                    "pinnedEnd":  {
+                                      "args":  "end --id e2e --final-text Done --app E2E Test --trust-thumbprint C418F23713526F12F5715DA3B1ACEC6477CD468C",
+                                      "exit":  0,
+                                      "output":  ""
+                                  },
+                    "listAfterEnd":  {
+                                         "args":  "list --app E2E Test --trust-thumbprint C418F23713526F12F5715DA3B1ACEC6477CD468C",
+                                         "exit":  0,
+                                         "output":  ""
+                                     },
+                    "unsignedSignature":  "NotSigned",
+                    "defaultRefusesUnsigned":  {
+                                                   "args":  "list --app E2E Test",
+                                                   "exit":  3,
+                                                   "output":  "irisaura-island: refusing to send: IrisAura.Island.exe is not signed."
+                                               },
+                    "devFlagAcceptsUnsigned":  {
+                                                   "args":  "list --app E2E Test --allow-unsigned-island",
+                                                   "exit":  0,
+                                                   "output":  ""
+                                               }
+                }
+}

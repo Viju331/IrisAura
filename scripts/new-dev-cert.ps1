@@ -38,7 +38,7 @@ $existing = Get-ChildItem Cert:\CurrentUser\My |
     Sort-Object NotAfter -Descending | Select-Object -First 1
 
 if ($existing) {
-    Write-Host "Reusing existing development certificate $($existing.Thumbprint) (expires $($existing.NotAfter:d))."
+    Write-Host "Reusing existing development certificate $($existing.Thumbprint) (expires $($existing.NotAfter.ToString('d')))."
     $cert = $existing
 }
 else {

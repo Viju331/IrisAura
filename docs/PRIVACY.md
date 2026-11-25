@@ -23,7 +23,8 @@ its own legal review.
 | Download file names and sizes | File-system events in the Downloads folder (names and sizes only; file contents never read) | In memory while the download shows | Never logged |
 | Volume, brightness, battery level | Windows | Not stored | — |
 | Timer | User | `%LocalAppData%\IrisAura\island-timer.json`: duration and end time only | Deleted when the timer ends or is cancelled |
-| Settings | User | `%LocalAppData%\IrisAura\island-settings.json`: provider id → on/off | — |
+| Settings | User | `%LocalAppData%\IrisAura\island-settings.json`: provider id → on/off, camera mirror switch, blocked SDK apps (program path + app name) | — |
+| SDK activities (other apps' text, icons, links) | Apps of the same user, through the per-user pipe | In memory only, until their TTL / end | Never logged (logs carry program file names and error codes) |
 | Quiet mode, hide-until | User | `%LocalAppData%\IrisAura\island-state.json` | — |
 | File tray paths | User (files dropped on the Island) | `%LocalAppData%\IrisAura\island-shelf.json`: paths only, max 30 | Files are never copied, opened (except by the user's click) or read; paths never logged; "Clear tray" deletes the list |
 | Camera mirror frames | Webcam, **only after the user switches the mirror on**, only while the panel shows | **Never stored**: drawn and dropped; the last frame is cleared when the camera stops | Shared read-only camera access; camera dot on while it runs; setting `CameraMirror` in island-settings.json |

@@ -33,7 +33,17 @@
 | IrisAura.Island.Providers | net10.0-windows10.0.19041.0 | System.CodeDom |  | 10.0.15 | transitive |
 | IrisAura.Island.Providers | net10.0-windows10.0.19041.0 | System.Numerics.Tensors |  | 9.0.0 | transitive |
 | IrisAura.Island.Sdk | netstandard2.0 | NETStandard.Library | [2.0.3, ) | 2.0.3 | direct |
+| IrisAura.Island.Sdk | netstandard2.0 | System.Security.Principal.Windows | 5.0.0 | 5.0.0 | direct |
+| IrisAura.Island.Sdk | netstandard2.0 | System.Text.Json | 10.0.15 | 10.0.15 | direct |
+| IrisAura.Island.Sdk | netstandard2.0 | Microsoft.Bcl.AsyncInterfaces |  | 10.0.15 | transitive |
 | IrisAura.Island.Sdk | netstandard2.0 | Microsoft.NETCore.Platforms |  | 1.1.0 | transitive |
+| IrisAura.Island.Sdk | netstandard2.0 | System.Buffers |  | 4.6.1 | transitive |
+| IrisAura.Island.Sdk | netstandard2.0 | System.IO.Pipelines |  | 10.0.15 | transitive |
+| IrisAura.Island.Sdk | netstandard2.0 | System.Memory |  | 4.6.3 | transitive |
+| IrisAura.Island.Sdk | netstandard2.0 | System.Numerics.Vectors |  | 4.6.1 | transitive |
+| IrisAura.Island.Sdk | netstandard2.0 | System.Runtime.CompilerServices.Unsafe |  | 6.1.2 | transitive |
+| IrisAura.Island.Sdk | netstandard2.0 | System.Text.Encodings.Web |  | 10.0.15 | transitive |
+| IrisAura.Island.Sdk | netstandard2.0 | System.Threading.Tasks.Extensions |  | 4.6.3 | transitive |
 | IrisAura.Island.Tests | net10.0-windows10.0.19041.0 | FluentAssertions | 7.2.2 | 7.2.2 | direct |
 | IrisAura.Island.Tests | net10.0-windows10.0.19041.0 | xunit.v3 | 4.0.3 | 4.0.3 | direct |
 | IrisAura.Island.Tests | net10.0-windows10.0.19041.0 | Microsoft.ApplicationInsights |  | 2.23.0 | transitive |

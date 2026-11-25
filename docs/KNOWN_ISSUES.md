@@ -43,6 +43,10 @@ Open issues, limitations and unverified assumptions. Close an item by linking th
 | KI-036 | Panel | CPU with the panel open was measured with the self-test's fake media (timeline at 4 Hz like the real view, waveform 15 Hz in the panel): 0.82 %. Not yet measured with a real media session in the panel. | Budget evidence | Owner: play music, open the panel for a minute; re-measure from outside | Open |
 | KI-037 | File tray | Files dragged from an elevated app (e.g. Explorer run as administrator) cannot be dropped on the non-elevated Island (Windows UIPI). Drag-out and drop not yet tried by hand with real apps (Explorer, Outlook, browsers). | Feature check | Owner check; no workaround planned | Open |
 | KI-038 | Camera mirror | Tested with the built-in camera on DEV-01 only (live in 0.8 s, released, exclusive open afterwards). Not tested while another app (Teams) holds the camera, or with external/IR cameras. | Feature check | Owner check during a video call | Open |
+| KI-039 | Release | **Release 1 gate not met:** no MSI (install/upgrade/uninstall), no production code-signing certificate, no update verification (BLUEPRINT §10 Phase 5 gate, §12). | Release 1 | Phase 9 Island subset: WiX MSI, buy/choose the signing certificate (owner), licence notices in the installer | Open |
+| KI-040 | SDK | The SDK's default check knows no production publisher yet: outside development, clients must pin a thumbprint (`--trust-thumbprint`) or use `--allow-unsigned-island` with unsigned builds. | SDK usability | Add the production certificate's subject to `ServerVerifier.ProductionPublisherSubjects` when it exists (Phase 9) | Open |
+| KI-041 | SDK | Independent security review of the SDK pipe (SECURITY_REVIEW gate) not done; self-review only. | Release 1 gate | Owner to arrange a reviewer | Open |
+| KI-042 | SDK | Button presses for an app with no open connection are dropped (scripts must run `irisaura-island watch` to receive them). Clicks on an SDK activity without `openUri` bring the app's window forward when it has one. | Behaviour | Document; consider queued actions if apps ask | Open |
 
 ## Unverified blueprint items (⚠ VERIFY) carried forward
 

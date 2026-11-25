@@ -16,6 +16,7 @@ public sealed class ArchitectureTests
         "IrisAura.Contracts",
         "IrisAura.Theme",
         "IrisAura.Island.Providers",
+        "IrisAura.Island.Sdk",
     ];
 
     public static TheoryData<string> IslandProjects() =>

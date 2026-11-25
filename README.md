@@ -16,15 +16,14 @@ IrisAura is a Windows desktop product with two parts:
 
 ## Project status
 
-**Phase 4B — dashboard panel.** Hover the Island (even when idle) to open a panel with two tabs:
-**Island** shows what's happening now (a large media card with album art and controls, or your timer, call or
-download), a calendar strip and an optional camera mirror (off until you turn it on; the camera runs only while the
-panel is open and nothing is recorded). **Tray** keeps shortcuts to files you drop on the Island, so you can drag
-them out to any app later. Below that sit the system providers from Phase 4: volume and brightness HUDs, charging
-and low battery, Bluetooth devices (with battery when Windows reports it), microphone/camera dots, timers
-(**Ctrl+Alt+Shift+T**) and downloads, each switchable under **Activities** in the right-click or tray menu.
-Notifications and the SDK come later. Progress and test evidence are in [docs/PROGRESS.md](docs/PROGRESS.md); the full
-plan is in [docs/BLUEPRINT.md](docs/BLUEPRINT.md).
+**Phase 5 — Activity SDK.** Any app or script of yours can now show its own progress on the Island: use the
+`IrisAura.Island.Sdk` library (netstandard2.0) or the `irisaura-island` command line
+(`irisaura-island push --app Backup --id nightly --title "Backing up" --progress 0.3`). See
+[docs/ISLAND_SDK.md](docs/ISLAND_SDK.md). Built on the dashboard panel (Phase 4B: hover the Island for the media
+card, calendar strip, optional camera mirror and the file Tray), the system providers (Phase 4: volume, brightness,
+battery, Bluetooth, mic/camera dots, timers with **Ctrl+Alt+Shift+T**, downloads) and real media (Phase 3).
+Release 1 still needs the installer and production signing (Phase 9). Progress and test evidence are in
+[docs/PROGRESS.md](docs/PROGRESS.md); the full plan is in [docs/BLUEPRINT.md](docs/BLUEPRINT.md).
 
 ### Trying the Island (development build)
 
@@ -60,7 +59,8 @@ native/                    C++ projects (inert credential-provider skeleton)
 tests/                     unit and architecture tests
 assets/brand/              original logos (do not edit) + source SVGs
 docs/                      blueprint, decisions, progress, security and privacy docs
-scripts/                   build, brand-asset and dev-certificate scripts
+samples/                   IrisAura.Island.SampleApp (Activity SDK example)
+scripts/                   build, brand-asset, dev-certificate and SDK end-to-end scripts
 models/  packaging/  installer/   placeholders for later phases
 ```
 

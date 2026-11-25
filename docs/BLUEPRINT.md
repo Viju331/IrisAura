@@ -1307,6 +1307,11 @@ A solo developer should normally do 0A, then Island Phases 1–5, and fit 0B/0C 
 - Implement per-user SDK pipe, versioned messages, app identity/ACL model, rate limits, payload validation, image limits, action callbacks, sample app, CLI and docs.
 - **Acceptance:** untrusted local process tests, malformed/oversized message tests, rate-limit tests, reconnect tests, and a test build signed with the development certificate pass.
 - **Release 1 gate:** IrisAura Island installs, upgrades, uninstalls and runs without IrisAura Face components, and the release build is signed with the production certificate (§12.4). Release 1 needs the Island subset of the Phase 9 work (MSI, signing, licence notices, update verification); it does not wait for the Face track.
+- **Implementation notes (2026-11-25, ADR 0009):**
+  - App identity = program path read from the OS + declared app name; ids namespaced per identity. Activities outlive the connection (TTL default 1 h) so the CLI can push and exit.
+  - Replies are errors and query answers only, in order; clients confirm with `query`. Protocol additions: `hello`, `query`/`activities`, `error` codes (docs/ISLAND_SDK.md).
+  - Client verification pins a thumbprint or a known publisher; a pinned development certificate is accepted without adding it to a trusted store. The production publisher is added in Phase 9.
+  - The Release 1 gate (MSI, production signing, update verification) is open (KI-039).
 
 ### Phase 6: IrisAura Face Lab — detection and recognition (2–4 weeks)
 

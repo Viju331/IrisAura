@@ -1,4 +1,6 @@
+using System.Windows.Media;
 using IrisAura.Island.Engine;
+using IrisAura.Island.Providers.Sdk;
 using IrisAura.Island.Shell;
 
 namespace IrisAura.Island.Views;
@@ -17,6 +19,8 @@ public sealed class GenericActivityView : ObservableObject, IActivityViewModel
     private readonly Action<string, string> _invokeAction;
     private IslandActivity _activity;
     private IReadOnlyList<ActivityButtonView> _buttons = [];
+    private byte[]? _iconBytes;
+    private ImageSource? _icon;
 
     public GenericActivityView(IslandActivity activity, Action<string, string> invokeAction)
     {
@@ -30,6 +34,24 @@ public sealed class GenericActivityView : ObservableObject, IActivityViewModel
     public ActivityKind Kind => _activity.Kind;
 
     public string? LeadingGlyph => _activity.Compact.LeadingGlyph;
+
+    /// <summary>An app's own icon (SDK activities; validated ≤ 128 × 128 by the provider), decoded once.</summary>
+    public ImageSource? LeadingImage
+    {
+        get
+        {
+            var bytes = (_activity.View as SdkVisuals)?.Icon;
+            if (!ReferenceEquals(bytes, _iconBytes))
+            {
+                _iconBytes = bytes;
+                _icon = bytes is null ? null : AppVisualsResolver.Decode(bytes, 64);
+            }
+
+            return _icon;
+        }
+    }
+
+    public bool HasLeadingImage => LeadingImage is not null;
 
     /// <summary>Icon colour role (brand tokens only): Default, Success (Aura.Cyan) or Alert (Aura.Error).</summary>
     public ActivityTone Tone => _activity.Compact.Tone;

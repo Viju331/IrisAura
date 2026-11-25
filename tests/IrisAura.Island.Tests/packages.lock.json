@@ -176,7 +176,8 @@
       "irisaura-island": {
         "type": "Project",
         "dependencies": {
-          "IrisAura.Contracts": "[1.0.0, )"
+          "IrisAura.Contracts": "[1.0.0, )",
+          "IrisAura.Island.Sdk": "[1.0.0, )"
         }
       },
       "irisaura.contracts": {

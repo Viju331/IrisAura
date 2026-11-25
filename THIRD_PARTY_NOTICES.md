@@ -15,6 +15,8 @@ test-only components are listed for completeness.
 | Serilog | 4.4.0 | Apache-2.0 | https://github.com/serilog/serilog — Copyright © Serilog Contributors | IrisAura.Island (logging) |
 | Serilog.Sinks.File | 7.0.0 | Apache-2.0 | https://github.com/serilog/serilog-sinks-file — Copyright © Serilog Contributors | IrisAura.Island (log files) |
 | NAudio (with NAudio.Core, NAudio.Wasapi, NAudio.WinMM, NAudio.Midi) | 3.3.0 | MIT | https://github.com/naudio/NAudio — Copyright © Mark Heath & contributors | IrisAura.Island.Providers (audio peak meters, volume HUD, capture sessions) |
+| System.Text.Json (netstandard2.0 SDK; with its netstandard dependencies) | 10.0.15 | MIT | https://github.com/dotnet/runtime — Copyright © .NET Foundation and Contributors | IrisAura.Island.Sdk (redistributed to apps that use the SDK) |
+| System.Security.Principal.Windows | 5.0.0 | MIT | https://github.com/dotnet/runtime — Copyright © .NET Foundation and Contributors | IrisAura.Island.Sdk (current user SID for the pipe name) |
 | System.Management (with System.CodeDom) | 10.0.15 | MIT | https://github.com/dotnet/runtime — Copyright © .NET Foundation and Contributors | IrisAura.Island.Providers (WMI brightness events) |
 
 Licence texts must be bundled with the installer and shown in *Settings → About → Third-party notices* (Phase 9).
