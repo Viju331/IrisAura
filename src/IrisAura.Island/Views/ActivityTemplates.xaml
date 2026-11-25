@@ -8,6 +8,9 @@
                     xmlns:controls="clr-namespace:IrisAura.Island.Views.Controls"
                     xmlns:views="clr-namespace:IrisAura.Island.Views">
 
+  <views:GlyphKeyConverter x:Key="GlyphKey" />
+  <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+
   <!-- Round icon button; Tag carries the glyph geometry. -->
   <Style x:Key="IslandIconButton" TargetType="Button">
     <Setter Property="Width" Value="36" />
@@ -35,6 +38,9 @@
             </Trigger>
             <Trigger Property="IsKeyboardFocused" Value="True">
               <Setter TargetName="Bg" Property="BorderBrush" Value="{StaticResource Aura.Cyan}" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter TargetName="Bg" Property="Opacity" Value="0.35" />
             </Trigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>
@@ -222,10 +228,157 @@
                            RingBrush="{StaticResource Aura.Cyan}" TrackBrush="{StaticResource Aura.Surface}" />
   </DataTemplate>
 
-  <!-- ===== Generic activities (engine activities without a custom view: SDK, HUDs, calls, downloads) ===== -->
+  <!-- ===== Real media (BLUEPRINT §8.6.1–§8.6.2) ===== -->
 
-  <views:GlyphKeyConverter x:Key="GlyphKey" />
-  <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+  <!-- Album art with rounded corners, or the app icon directly on the black pill (no background colour —
+       owner request 2026-11-25). Size comes from the parent; Tag carries the corner radius.
+       CacheMode=BitmapCache: the images are rasterised once instead of re-scaled on every 30 Hz waveform frame
+       (measured: the waveform redraw cost ~5 % CPU with uncached images, ADR 0006). -->
+  <DataTemplate x:Key="MediaArt">
+    <Grid CacheMode="BitmapCache">
+      <Image Source="{Binding AppIcon}" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality">
+        <Image.Style>
+          <Style TargetType="Image">
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding HasAlbumArt}" Value="True">
+                <Setter Property="Visibility" Value="Collapsed" />
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </Image.Style>
+      </Image>
+      <Border CornerRadius="{Binding Tag, RelativeSource={RelativeSource AncestorType=ContentPresenter}, FallbackValue=6}"
+              Visibility="{Binding HasAlbumArt, Converter={StaticResource BoolToVisibility}}">
+        <Border.Background>
+          <ImageBrush ImageSource="{Binding AlbumArt}" Stretch="UniformToFill" />
+        </Border.Background>
+      </Border>
+    </Grid>
+  </DataTemplate>
+
+  <DataTemplate x:Key="Compact.MediaActivityView">
+    <Grid>
+      <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource MediaArt}" Tag="6"
+                        Width="22" Height="22" HorizontalAlignment="Left" Margin="9,0,0,0" />
+      <controls:WaveformBars Levels="{Binding Bars}" BarBrush="{Binding AccentBrush}"
+                             Height="16" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,15,0" />
+    </Grid>
+  </DataTemplate>
+
+  <DataTemplate x:Key="Expanded.MediaActivityView">
+    <Grid Margin="20,18,20,12">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="56" />
+        <RowDefinition Height="*" />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+
+      <Grid Grid.Row="0">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="56" />
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <Button Grid.Column="0" Command="{Binding OpenAppCommand}" Cursor="Hand" Focusable="True"
+                AutomationProperties.Name="{Binding AppName, StringFormat=Open {0}}">
+          <Button.Template>
+            <ControlTemplate TargetType="Button">
+              <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource MediaArt}" Tag="12" />
+            </ControlTemplate>
+          </Button.Template>
+        </Button>
+        <StackPanel Grid.Column="1" Margin="14,0,8,0" VerticalAlignment="Center">
+          <TextBlock Text="{Binding Title}" FontSize="15" FontWeight="SemiBold"
+                     Foreground="{StaticResource Aura.Frost}" TextTrimming="CharacterEllipsis" />
+          <TextBlock Text="{Binding Artist}" FontSize="12.5" Margin="0,2,0,0"
+                     Foreground="{StaticResource Aura.Mist}" TextTrimming="CharacterEllipsis"
+                     Visibility="{Binding HasArtist, Converter={StaticResource BoolToVisibility}}" />
+          <ItemsControl ItemsSource="{Binding Others}" Margin="0,3,0,0"
+                        Visibility="{Binding HasOthers, Converter={StaticResource BoolToVisibility}}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <StackPanel Orientation="Horizontal" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Button Command="{Binding Select}" Cursor="Hand" Margin="0,0,8,0"
+                        AutomationProperties.Name="{Binding Name, StringFormat=Switch to {0}}">
+                  <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                      <TextBlock Text="{Binding Name, StringFormat=Also: {0}}" FontSize="11"
+                                 Foreground="{StaticResource Aura.Cyan}" TextDecorations="Underline" />
+                    </ControlTemplate>
+                  </Button.Template>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+        <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
+          <Button Command="{Binding OpenAppCommand}" Cursor="Hand" HorizontalAlignment="Right"
+                  AutomationProperties.Name="{Binding AppName, StringFormat=Open {0}}">
+            <Button.Template>
+              <ControlTemplate TargetType="Button">
+                <StackPanel Orientation="Horizontal" Background="Transparent">
+                  <Image Source="{Binding AppIcon}" Width="14" Height="14" Margin="0,0,5,0"
+                         RenderOptions.BitmapScalingMode="HighQuality" CacheMode="BitmapCache" />
+                  <TextBlock Text="{Binding AppName}" Style="{StaticResource Caption}" MaxWidth="110" />
+                </StackPanel>
+              </ControlTemplate>
+            </Button.Template>
+          </Button>
+          <controls:WaveformBars Levels="{Binding Bars}" BarBrush="{Binding AccentBrush}"
+                                 Height="14" HorizontalAlignment="Right" Margin="0,6,0,0" />
+        </StackPanel>
+      </Grid>
+
+      <Grid Grid.Row="2" Margin="0,0,0,4" Visibility="{Binding HasTimeline, Converter={StaticResource BoolToVisibility}}">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="42" />
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="46" />
+        </Grid.ColumnDefinitions>
+        <TextBlock Grid.Column="0" Text="{Binding ElapsedText}" Style="{StaticResource Caption}"
+                   Typography.NumeralAlignment="Tabular" VerticalAlignment="Center" />
+        <controls:SeekBar Grid.Column="1" Margin="4,0" VerticalAlignment="Center"
+                          Progress="{Binding Progress}" CanSeek="{Binding CanSeek}" SeekCommand="{Binding SeekCommand}"
+                          TrackBrush="{StaticResource Aura.Surface}" FillBrush="{StaticResource Aura.Frost}"
+                          AutomationProperties.Name="Playback position" />
+        <TextBlock Grid.Column="2" Text="{Binding RemainingText}" Style="{StaticResource Caption}"
+                   Typography.NumeralAlignment="Tabular" HorizontalAlignment="Right" VerticalAlignment="Center" />
+      </Grid>
+
+      <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center">
+        <Button Style="{StaticResource IslandIconButton}" Tag="{StaticResource Aura.Glyph.Previous}"
+                Command="{Binding PreviousCommand}" IsEnabled="{Binding CanPrevious}" AutomationProperties.Name="Previous" />
+        <Button Command="{Binding PlayPauseCommand}" IsEnabled="{Binding CanPlayPause}" Margin="18,0">
+          <Button.Style>
+            <Style TargetType="Button" BasedOn="{StaticResource IslandIconButton}">
+              <Setter Property="Tag" Value="{StaticResource Aura.Glyph.Pause}" />
+              <Setter Property="AutomationProperties.Name" Value="Pause" />
+              <Style.Triggers>
+                <DataTrigger Binding="{Binding IsPlaying}" Value="False">
+                  <Setter Property="Tag" Value="{StaticResource Aura.Glyph.Play}" />
+                  <Setter Property="AutomationProperties.Name" Value="Play" />
+                </DataTrigger>
+              </Style.Triggers>
+            </Style>
+          </Button.Style>
+        </Button>
+        <Button Style="{StaticResource IslandIconButton}" Tag="{StaticResource Aura.Glyph.Next}"
+                Command="{Binding NextCommand}" IsEnabled="{Binding CanNext}" AutomationProperties.Name="Next" />
+      </StackPanel>
+    </Grid>
+  </DataTemplate>
+
+  <DataTemplate x:Key="Bubble.MediaActivityView">
+    <controls:WaveformBars Levels="{Binding Bars}" BarBrush="{Binding AccentBrush}" Height="14"
+                           BarWidth="2.5" Gap="1.5" />
+  </DataTemplate>
+
+  <!-- ===== Generic activities (engine activities without a custom view: SDK, HUDs, calls, downloads) ===== -->
 
   <!-- Filled 16 px glyph from a resource key. -->
   <DataTemplate x:Key="GenericGlyph">

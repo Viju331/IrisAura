@@ -236,7 +236,7 @@ public sealed class ProviderHostTests
 
         public void Stop() => Stopped = true;
 
-        public void OnAction(string activityId, string actionId)
+        public bool OnAction(string activityId, string actionId)
         {
             if (ThrowOnAction)
             {
@@ -244,6 +244,7 @@ public sealed class ProviderHostTests
             }
 
             Actions.Add((activityId, actionId));
+            return true;
         }
     }
 }

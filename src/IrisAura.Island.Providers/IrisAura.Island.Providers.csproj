@@ -6,6 +6,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- NAudio (approved, BLUEPRINT §4): CoreAudio session peak meters for the waveform (§8.6.2). -->
+    <PackageReference Include="NAudio" />
+    <PackageReference Include="Serilog" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="IrisAura.Island.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\IrisAura.Contracts\IrisAura.Contracts.csproj" />
   </ItemGroup>
 </Project>

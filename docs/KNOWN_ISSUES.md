@@ -24,6 +24,11 @@ Open issues, limitations and unverified assumptions. Close an item by linking th
 | KI-018 | Island | "Start timer" in the menu starts the debug timer; the real timer provider (persisted, hotkey, sound) is Phase 4. | Feature gap | Phase 4 | Open |
 | KI-019 | Island | Menu item "Settings" is disabled until the Island settings window (§8.7). | Feature gap | §8.7 settings window | Open |
 | KI-020 | Island | Native menus take the foreground while open (Windows requirement for correct dismissal) and hand it back afterwards. ⚠ VERIFY by hand that focus returns in Office, browsers and VS Code. | Focus | Owner check (PROGRESS Phase 2) | Open |
+| KI-021 | Media | Spotify, Firefox, VLC, foobar2000 and real streaming sites not tested (not installed / owner accounts). | Phase 3 acceptance (Spotify) | Owner checks (PROGRESS Phase 3) | Open |
+| KI-022 | Island perf | Working set 120–140 MB with real media (target < 120 MB; 80–100 MB without media). WinRT media APIs, NAudio and decoded images add memory. | RAM budget | Measure on a quiet machine; trim (release artwork when hidden, lazy NAudio) if still over | Open |
+| KI-023 | Media | Browsers are one app for the "hide while in front" rule: with the browser in front its media hides whichever tab plays. Old UWP apps hosted in `ApplicationFrameHost` are not matched. | Behaviour detail | Owner feedback; per-tab detection is not available from GSMTC | Open |
+| KI-024 | Media | Bringing the source app to the front (click) is not covered by automated tests (needs a real click for foreground rights). ⚠ VERIFY | Feature check | Owner check | Open |
+| KI-025 | Media | Quiet audio gives a small waveform (level is a linear peak, √-shaped). | Visual | Tune with real music in owner tests | Open |
 | KI-016 | Build | Installing Visual Studio 2026 removed .NET SDK 10.0.401 and added 11.0.100; `global.json` now rolls forward to the latest installed 10.0.x feature band (10.0.302 today). | Reproducibility | Install the latest .NET 10 SDK servicing release; keep `global.json` on 10.0.x | Open |
 
 ## Unverified blueprint items (⚠ VERIFY) carried forward

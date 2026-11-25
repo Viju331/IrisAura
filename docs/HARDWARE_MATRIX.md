@@ -36,4 +36,7 @@ numbers, user names or any biometric data.
 | 2026-11-24 | DEV-01 | 26300 | same | Click-through (WindowFromPoint) | Pass | Alpha-0 pixels pass clicks without `WS_EX_TRANSPARENT`; shadow pixels need the toggle |
 | 2026-11-24 | DEV-01 | 26300 | same | Full screen (borderless covering window) | Pass (run 1), inconclusive later | Later runs: Windows withheld foreground from the probe window |
 | 2026-11-24 | DEV-01 | 26300 | same | Phase 2 self-test (activity engine) | 38 pass / 12 fail / 2 inconclusive | All engine checks pass (arbiter, transient restore, swap, tray, quiet mode, provider isolation/restart). Fails: performance only. `docs/evidence/phase-2-selftest-2026-11-24.json` |
+| 2026-11-25 | DEV-01 | 26300 | same | Phase 3 media: Media Player, Edge, Chrome (test tone) | Pass (per-app gaps documented) | `docs/evidence/phase-3-probe-*.json`; Chrome uses `Chrome.<hash>` session id |
+| 2026-11-25 | DEV-01 | 26300 | same | Island CPU with real Chrome media + live waveform | 1.45–1.52 % | After caching icon/artwork (was 3.4–9.3 %); WS 120–127 MB |
+| 2026-11-25 | DEV-01 | 26300 | same | Phase 3 self-test | 39 pass / 11 fail / 2 inconclusive | Fails: startup, dropped frames. `docs/evidence/phase-3-selftest-2026-11-25.json` |
 | | | | 2+ monitors, mixed DPI | Placement, display change, follow cursor | ⏳ | Owner hardware needed (KI-013) |

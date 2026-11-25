@@ -12,7 +12,7 @@ public sealed record ActivityButtonView(string Label, RelayCommand Command);
 /// One instance per activity id; <see cref="Apply"/> updates it in place so the shell does not
 /// cross-fade on every content update.
 /// </summary>
-public sealed class GenericActivityView : ObservableObject, IIslandActivityView
+public sealed class GenericActivityView : ObservableObject, IActivityViewModel
 {
     private readonly Action<string, string> _invokeAction;
     private IslandActivity _activity;

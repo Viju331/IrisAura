@@ -1,0 +1,39 @@
+{
+  "tool": "IrisAura.Island --media-probe",
+  "timestampUtc": "2026-11-25T09:05:40.8158802Z",
+  "os": "Microsoft Windows NT 10.0.26300.0",
+  "sessionCount": 1,
+  "islandWouldShow": "MSEdge",
+  "sessions": [
+    {
+      "appId": "MSEdge",
+      "isCurrent": true,
+      "status": "Playing",
+      "hasTitle": true,
+      "hasArtist": true,
+      "hasAlbum": false,
+      "hasArtwork": false,
+      "artworkBytes": 0,
+      "timeline": {
+        "hasDuration": true,
+        "durationSeconds": 40,
+        "positionSeconds": 0.1,
+        "lastUpdatedAgeSeconds": 7.5
+      },
+      "playbackRate": 1,
+      "controls": {
+        "CanPlay": false,
+        "CanPause": true,
+        "CanNext": false,
+        "CanPrevious": false,
+        "CanSeek": true,
+        "CanTogglePlayPause": true
+      },
+      "processName": "msedge",
+      "fallbackDisplayName": "Microsoft Edge",
+      "peakLevelMax": 0.05,
+      "levelFromOwnSession": true,
+      "wouldBeShown": true
+    }
+  ]
+}

@@ -62,6 +62,57 @@ internal static class Win32Shell
             IsZoomed(hwnd) && (style & WS_CAPTION) == WS_CAPTION);
     }
 
+    /// <summary>
+    /// Identifies the app owning the foreground window, or <see langword="null"/> for none / the Island itself.
+    /// Reads only the process name and (for packaged apps) its AUMID; nothing about the window's content.
+    /// </summary>
+    public static unsafe Engine.ForegroundApp? DescribeForegroundApp(nint hwnd)
+    {
+        if (hwnd == 0)
+        {
+            return null;
+        }
+
+        var root = GetAncestor(hwnd, GA_ROOT);
+        GetWindowThreadProcessId(root != 0 ? root : hwnd, out var pid);
+        if (pid == 0 || pid == (uint)Environment.ProcessId)
+        {
+            return null;
+        }
+
+        string name;
+        try
+        {
+            using var process = System.Diagnostics.Process.GetProcessById((int)pid);
+            name = process.ProcessName;
+        }
+        catch (Exception)
+        {
+            return null; // exited
+        }
+
+        string? aumid = null;
+        var handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+        if (handle != 0)
+        {
+            try
+            {
+                var buffer = stackalloc char[256];
+                uint length = 256;
+                if (GetApplicationUserModelId(handle, ref length, buffer) == 0 && length > 1)
+                {
+                    aumid = new string(buffer, 0, (int)length - 1);
+                }
+            }
+            finally
+            {
+                CloseHandle(handle);
+            }
+        }
+
+        return new Engine.ForegroundApp(name, aumid);
+    }
+
     public static long GetExtendedStyle(nint hwnd) => GetWindowLong(hwnd, GWL_EXSTYLE);
 
     /// <summary>Adds and removes extended window styles; no-op when nothing changes.</summary>

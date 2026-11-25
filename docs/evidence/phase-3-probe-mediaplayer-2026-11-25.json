@@ -1,0 +1,39 @@
+{
+  "tool": "IrisAura.Island --media-probe",
+  "timestampUtc": "2026-11-25T08:59:03.6276831Z",
+  "os": "Microsoft Windows NT 10.0.26300.0",
+  "sessionCount": 1,
+  "islandWouldShow": "Microsoft.ZuneMusic_8wekyb3d8bbwe!Microsoft.ZuneMusic",
+  "sessions": [
+    {
+      "appId": "Microsoft.ZuneMusic_8wekyb3d8bbwe!Microsoft.ZuneMusic",
+      "isCurrent": true,
+      "status": "Playing",
+      "hasTitle": true,
+      "hasArtist": false,
+      "hasAlbum": false,
+      "hasArtwork": false,
+      "artworkBytes": 0,
+      "timeline": {
+        "hasDuration": true,
+        "durationSeconds": 40,
+        "positionSeconds": 0,
+        "lastUpdatedAgeSeconds": 4.4
+      },
+      "playbackRate": 1,
+      "controls": {
+        "CanPlay": false,
+        "CanPause": true,
+        "CanNext": false,
+        "CanPrevious": false,
+        "CanSeek": true,
+        "CanTogglePlayPause": true
+      },
+      "processName": "Microsoft.Media.Player",
+      "fallbackDisplayName": "Media Player",
+      "peakLevelMax": 0.0244,
+      "levelFromOwnSession": true,
+      "wouldBeShown": true
+    }
+  ]
+}

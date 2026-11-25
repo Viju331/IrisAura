@@ -906,6 +906,15 @@ await session.TryChangePlaybackPositionAsync(ticks); // seek
 - **Tint colour:** the dominant colour of the album art. Use a downscaled 16×16 average, excluding near-black and near-white pixels, and keep a minimum brightness so it stays readable on black.
 - **Do not use** the private NowPlayingSessionManager (NPSM) API wrappers in production. They are undocumented and can break on any Windows update.
 
+**Implementation notes (Phase 3, ADR 0006):**
+- One media activity for the chosen session; other sessions appear in the expanded view's switcher.
+- Chromium browsers can report per-install session ids (`Chrome.<hash>`); match by prefix.
+- Cache artwork only when present (apps often publish it after the title); cache images with `BitmapCache` so the
+  30 Hz waveform does not re-scale them every frame (measured 3.4–9.3 % → ~1.5 % CPU).
+- **Hide while the app is in front (owner decision 2026-11-25):** a persistent activity is not shown while its own
+  app is the foreground app; it appears when the app is minimised or another app is in front.
+- The app icon sits directly on the black pill (no background colour); artwork replaces it when present.
+
 #### 8.6.2 Waveform (the animated bars)
 
 - **Option A (recommended):** NAudio `AudioSessionManager` → `AudioMeterInformation.MasterPeakValue` for the audio session whose process matches the media source. Sample at 30 Hz.

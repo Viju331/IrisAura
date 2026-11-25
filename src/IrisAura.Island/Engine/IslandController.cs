@@ -13,9 +13,6 @@ namespace IrisAura.Island.Engine;
 /// </summary>
 public sealed class IslandController : IDisposable
 {
-    /// <summary>Action id sent to a provider on middle click (media: play/pause).</summary>
-    public const string PrimaryAction = "primary";
-
     public static readonly TimeSpan HideDuration = TimeSpan.FromHours(1);
 
     private const int MenuQuiet = 1;
@@ -33,17 +30,30 @@ public sealed class IslandController : IDisposable
     private readonly IslandStateStore _store;
     private readonly TimeProvider _time;
     private readonly DispatcherTimer _timer;
-    private readonly Dictionary<string, GenericActivityView> _genericViews = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, IActivityViewModel> _views = new(StringComparer.Ordinal);
+    private readonly Func<IslandActivity, IActivityViewModel?>? _viewFactory;
     private TrayIcon? _tray;
     private IslandState _state;
     private UserPreference? _preference;
+    private ForegroundApp? _foreground;
 
-    public IslandController(IslandWindow window, ActivityManager manager, ActivityProviderHost host, IslandStateStore store)
+    /// <param name="window">The Island window.</param>
+    /// <param name="manager">Activity engine.</param>
+    /// <param name="host">Provider host (actions are routed through it).</param>
+    /// <param name="store">Persisted state.</param>
+    /// <param name="viewFactory">Creates rich view models for data payloads (e.g. media); <see langword="null"/> result = generic view.</param>
+    public IslandController(
+        IslandWindow window,
+        ActivityManager manager,
+        ActivityProviderHost host,
+        IslandStateStore store,
+        Func<IslandActivity, IActivityViewModel?>? viewFactory = null)
     {
         _window = window;
         _manager = manager;
         _host = host;
         _store = store;
+        _viewFactory = viewFactory;
         _time = manager.Time;
         _state = store.Load();
 
@@ -52,10 +62,12 @@ public sealed class IslandController : IDisposable
 
         _manager.Changed += OnActivityChanged;
         _window.BubbleClicked += (_, _) => Swap();
+        _window.PillClicked += (_, _) => OnPillClicked();
         _window.WheelScrolled += (_, delta) => Cycle(delta > 0 ? -1 : 1);
         _window.MiddleClicked += (_, _) => InvokePrimaryAction();
         _window.ContextMenuRequested += (_, point) => ShowMenu(_window.Handle, point.X, point.Y, openUpwards: false);
         _window.HotkeyPressedWhileHidden += (_, _) => ShowAgain();
+        Interop.NativeMethods.ForegroundChanged += OnForegroundChanged;
     }
 
     /// <summary>The user chose Quit.</summary>
@@ -80,6 +92,15 @@ public sealed class IslandController : IDisposable
 
     public bool IsHiddenByUser => _state.HiddenUntil is { } until && until > _time.GetUtcNow();
 
+    /// <summary>
+    /// Hide an activity while its own app is in front (owner request 2026-11-25; default on). It appears again
+    /// when the app is minimised or another app comes to the front.
+    /// </summary>
+    public bool HideWhenSourceAppInFront { get; set; } = true;
+
+    /// <summary>The app currently in front (diagnostics).</summary>
+    public ForegroundApp? ForegroundApp => _foreground;
+
     /// <summary>Show the "Debug panel…" menu item.</summary>
     public bool DebugMenuEnabled { get; set; }
 
@@ -88,6 +109,7 @@ public sealed class IslandController : IDisposable
     /// <summary>Applies persisted state and shows the current layout. Call once the window exists.</summary>
     public void Start()
     {
+        _foreground = Win32Shell.DescribeForegroundApp(Interop.NativeMethods.GetForegroundWindow());
         _window.SetUserHidden(IsHiddenByUser);
         Refresh();
     }
@@ -108,6 +130,7 @@ public sealed class IslandController : IDisposable
     {
         _timer.Stop();
         _manager.Changed -= OnActivityChanged;
+        Interop.NativeMethods.ForegroundChanged -= OnForegroundChanged;
         _tray?.Dispose();
     }
 
@@ -126,7 +149,8 @@ public sealed class IslandController : IDisposable
         }
 
         ShellQuietTime = Win32Shell.QueryNotificationState() == UserNotificationState.QuietTime;
-        Layout = PriorityArbiter.Arrange(new ArbiterInput(_manager.Activities, now, QuietMode || ShellQuietTime, _preference));
+        Layout = PriorityArbiter.Arrange(new ArbiterInput(
+            _manager.Activities, now, QuietMode || ShellQuietTime, _preference, HideWhenSourceAppInFront ? _foreground : null));
         _window.SetPresentation(ToPresentation(Layout));
         LayoutChanged?.Invoke(this, Layout);
 
@@ -163,15 +187,65 @@ public sealed class IslandController : IDisposable
             return custom;
         }
 
-        if (_genericViews.TryGetValue(activity.Id, out var view))
+        // A data payload (e.g. media state) gets a rich view from the factory; everything else the generic view.
+        var wantsRich = activity.View is not null;
+        if (_views.TryGetValue(activity.Id, out var view) && (view is GenericActivityView) != wantsRich)
         {
             view.Apply(activity);
             return view;
         }
 
-        view = new GenericActivityView(activity, InvokeAction);
-        _genericViews[activity.Id] = view;
+        view = (wantsRich ? _viewFactory?.Invoke(activity) : null) ?? new GenericActivityView(activity, InvokeAction);
+        _views[activity.Id] = view;
         return view;
+    }
+
+    /// <summary>
+    /// Brings the activity's source app to the front (BLUEPRINT §8.6.1); if that is not possible, asks the
+    /// owning provider to handle "open".
+    /// </summary>
+    /// <returns><see langword="true"/> when something handled it.</returns>
+    public bool OpenApp(string activityId)
+    {
+        if (_manager.Find(activityId) is not { } activity)
+        {
+            return false;
+        }
+
+        return AppActivator.TryActivate(activity.SourceAppId) || _host.DispatchAction(activity, ActivityActions.Open);
+    }
+
+    /// <summary>Click on the compact pill: open the source app, or pin the Island open when there is no app.</summary>
+    private void OnPillClicked()
+    {
+        var activity = Layout.Transient ?? Layout.Main;
+        if (activity is null || !OpenApp(activity.Id))
+        {
+            _window.TogglePin();
+        }
+    }
+
+    /// <summary>The app in front changed: its own activity hides; the previous app's activity may reappear.</summary>
+    private void OnForegroundChanged(nint hwnd)
+    {
+        // The Island's own menus, debug panel and focus mode do not count as "another app in front".
+        Interop.NativeMethods.GetWindowThreadProcessId(hwnd, out var pid);
+        if (pid == (uint)Environment.ProcessId)
+        {
+            return;
+        }
+
+        var app = Win32Shell.DescribeForegroundApp(hwnd);
+        if (app == _foreground)
+        {
+            return;
+        }
+
+        _foreground = app;
+        if (HideWhenSourceAppInFront)
+        {
+            Refresh();
+        }
     }
 
     private void OnActivityChanged(object? sender, ActivityChangedEventArgs e)
@@ -179,7 +253,11 @@ public sealed class IslandController : IDisposable
         var a = e.Activity;
         if (e.Change == ActivityChange.Ended)
         {
-            _genericViews.Remove(a.Id);
+            if (_views.Remove(a.Id, out var removed) && removed is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
+
             if (_preference is { } p && (p.PreferredMainId == a.Id || p.PartnerId == a.Id))
             {
                 _preference = null; // remembered only until either activity ends
@@ -223,7 +301,7 @@ public sealed class IslandController : IDisposable
     {
         if (Layout.Main is { } main)
         {
-            _host.DispatchAction(main, PrimaryAction);
+            _host.DispatchAction(main, ActivityActions.Primary);
         }
     }
 

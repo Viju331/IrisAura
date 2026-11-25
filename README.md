@@ -16,10 +16,12 @@ IrisAura is a Windows desktop product with two parts:
 
 ## Project status
 
-**Phase 2 — IrisAura Island activity engine.** The Island window (Phase 1) is now driven by the
-activity engine: priorities, split bubble, temporary banners and HUDs, swap and scroll-to-cycle,
-quiet mode, hide for 1 hour, a tray icon with menu, and isolated providers. Activities are still
-*fake* (debug provider); real media, system providers and the SDK come in Phases 3–5. Progress and test evidence are in
+**Phase 3 — real media.** The Island shows what's playing in any app that publishes to the Windows
+media controls (tested: Media Player, Edge, Chrome): title, artist, album art with a colour tint,
+live progress, play/pause/next/previous/seek, a waveform from the app's own audio, and a click opens
+the app. While the app itself is in front, the Island hides its activity; minimise it and it appears.
+Built on the activity engine (Phase 2: priorities, split bubble, banners, quiet mode, tray menu).
+System providers (volume, battery, Bluetooth, timers…) and the SDK come in Phases 4–5. Progress and test evidence are in
 [docs/PROGRESS.md](docs/PROGRESS.md); the full plan is in [docs/BLUEPRINT.md](docs/BLUEPRINT.md).
 
 ### Trying the Island (development build)

@@ -1,0 +1,40 @@
+{
+  "tool": "IrisAura.Island --media-probe",
+  "timestampUtc": "2026-11-25T09:14:40.1335692Z",
+  "os": "Microsoft Windows NT 10.0.26300.0",
+  "sessionCount": 1,
+  "islandWouldShow": "Chrome.VXSLNYZIFHXJXHXRSTL6TR5EKU",
+  "changeEventsIn5Seconds": 0,
+  "sessions": [
+    {
+      "appId": "Chrome.VXSLNYZIFHXJXHXRSTL6TR5EKU",
+      "isCurrent": true,
+      "status": "Playing",
+      "hasTitle": true,
+      "hasArtist": true,
+      "hasAlbum": true,
+      "hasArtwork": true,
+      "artworkBytes": 16673,
+      "timeline": {
+        "hasDuration": true,
+        "durationSeconds": 40,
+        "positionSeconds": 0,
+        "lastUpdatedAgeSeconds": 6.8
+      },
+      "playbackRate": 1,
+      "controls": {
+        "CanPlay": false,
+        "CanPause": true,
+        "CanNext": false,
+        "CanPrevious": false,
+        "CanSeek": true,
+        "CanTogglePlayPause": true
+      },
+      "processName": "chrome",
+      "fallbackDisplayName": "Google Chrome",
+      "peakLevelMax": 0.05,
+      "levelFromOwnSession": true,
+      "wouldBeShown": true
+    }
+  ]
+}

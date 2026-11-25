@@ -118,6 +118,7 @@ public partial class DebugPanelWindow : Window
         }
 
         sb.AppendLine($"Preference   {(_controller.Preference is { } p ? $"{p.PreferredMainId}{(p.PartnerId is null ? string.Empty : " ⇄ " + p.PartnerId)}" : "—")}");
+        sb.AppendLine($"App in front {_controller.ForegroundApp?.ProcessName ?? "—"}{(layout.HiddenBecauseAppInFront.Count > 0 ? $" → hiding {string.Join(", ", layout.HiddenBecauseAppInFront.Select(a => a.Id))}" : string.Empty)}");
         sb.AppendLine($"Quiet        user {_controller.QuietMode}, Windows quiet time {_controller.ShellQuietTime}");
         foreach (var provider in _host.Providers)
         {

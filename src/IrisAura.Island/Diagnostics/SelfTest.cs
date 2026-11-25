@@ -8,8 +8,9 @@ using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Media;
 using IrisAura.Island.Engine;
+using IrisAura.Island.Providers.Media;
 using IrisAura.Island.Shell;
-using ActivityKind = IrisAura.Island.Engine.ActivityKind;
+using ActivityKind = IrisAura.Island.Activities.ActivityKind;
 using static IrisAura.Island.Interop.NativeMethods;
 
 namespace IrisAura.Island.Diagnostics;
@@ -67,7 +68,16 @@ internal sealed class SelfTest(
     {
         var handle = island.Handle;
         _baselineForeground = GetForegroundWindow();
-        await Task.Delay(1500);
+        await Task.Delay(2500);
+
+        // Real media (Phase 3): recorded for information, then stopped so the checks below are deterministic.
+        var real = controller.Layout.PersistentInOrder.Concat([controller.Layout.Transient]).OfType<IslandActivity>()
+            .FirstOrDefault(a => a.ProviderId == MediaProvider.ProviderId);
+        Info("real media session (Windows media controls)", real is null
+            ? $"none playing or paused (provider {host.Status(MediaProvider.ProviderId)?.State})"
+            : $"app {real.SourceAppId}, {(real.PausedSince is null ? "playing" : "paused")}");
+        host.Stop(MediaProvider.ProviderId);
+        await SettleAsync();
 
         // ---- startup, styles, placement
         _metrics["startupToFirstFrameMs"] = Math.Round(startupMs, 1);
@@ -171,6 +181,8 @@ internal sealed class SelfTest(
         try
         {
             _metrics["startupToFirstFrameMs"] = Math.Round(startupMs, 1);
+            await Task.Delay(1000);
+            host.Stop(MediaProvider.ProviderId); // measure the fake waveform only
             _metrics["idleCpu"] = await MeasureCpuMedianAsync(TimeSpan.FromSeconds(5), samples: 2);
             driver.Show(FakeScenario.Media);
             await WaitForAnimationAsync();

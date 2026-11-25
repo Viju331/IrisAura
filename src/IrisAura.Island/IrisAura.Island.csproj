@@ -12,6 +12,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Provider contracts (ActivitySpec, IActivityProvider, …) from IrisAura.Island.Providers. -->
+    <Using Include="IrisAura.Island.Activities" />
+    <InternalsVisibleTo Include="IrisAura.Island.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Logging to %LocalAppData%\IrisAura\logs (BLUEPRINT §4). Approved; versions in Directory.Packages.props. -->
     <PackageReference Include="Serilog" />
     <PackageReference Include="Serilog.Sinks.File" />

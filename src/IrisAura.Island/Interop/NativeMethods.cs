@@ -288,6 +288,51 @@ internal static unsafe partial class NativeMethods
     [LibraryImport("user32.dll")]
     public static partial int GetSystemMetricsForDpi(int index, uint dpi);
 
+    // ---- App activation and icons (Phase 3)
+
+    public const int SW_RESTORE = 9;
+    public const uint SHGFI_ICON = 0x000000100;
+    public const uint SHGFI_LARGEICON = 0x000000000;
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    public struct SHFILEINFOW
+    {
+        public nint hIcon;
+        public int iIcon;
+        public uint dwAttributes;
+        public fixed char szDisplayName[260];
+        public fixed char szTypeName[80];
+    }
+
+    [LibraryImport("shell32.dll", EntryPoint = "SHGetFileInfoW", StringMarshalling = StringMarshalling.Utf16)]
+    public static partial nint SHGetFileInfo(string path, uint attributes, SHFILEINFOW* info, uint size, uint flags);
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool IsIconic(nint hwnd);
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool ShowWindow(nint hwnd, int command);
+
+    // ---- Foreground app identity (Phase 3: hide an activity while its app is in front)
+
+    public const uint PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
+
+    [LibraryImport("user32.dll")]
+    public static partial uint GetWindowThreadProcessId(nint hwnd, out uint processId);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    public static partial nint OpenProcess(uint access, [MarshalAs(UnmanagedType.Bool)] bool inherit, uint processId);
+
+    [LibraryImport("kernel32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool CloseHandle(nint handle);
+
+    /// <summary>Documented (appmodel.h); returns ERROR_SUCCESS for packaged processes, APPMODEL_ERROR_NO_APPLICATION otherwise.</summary>
+    [LibraryImport("kernel32.dll")]
+    public static partial int GetApplicationUserModelId(nint process, ref uint length, char* buffer);
+
     /// <summary>Returns the window class name, or an empty string.</summary>
     public static string GetClassName(nint hwnd)
     {

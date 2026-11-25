@@ -179,6 +179,45 @@ public sealed class PriorityArbiterTests
     }
 
     [Fact]
+    public void Activity_is_hidden_while_its_own_app_is_in_front_and_returns_when_it_is_not()
+    {
+        _manager.Start("p", Specs.Persistent("media", ActivityKind.Media) with { SourceAppId = "Spotify.exe" });
+        _manager.Start("p", Specs.Persistent("timer", ActivityKind.Timer) with { SourceAppId = "debug" });
+
+        var inFront = PriorityArbiter.Arrange(new ArbiterInput(_manager.Activities, _time.GetUtcNow(), Foreground: new ForegroundApp("Spotify", null)));
+        inFront.Main!.Id.Should().Be("timer");
+        inFront.Bubble.Should().BeNull();
+        inFront.HiddenBecauseAppInFront.Select(a => a.Id).Should().Equal("media");
+
+        var minimised = PriorityArbiter.Arrange(new ArbiterInput(_manager.Activities, _time.GetUtcNow(), Foreground: new ForegroundApp("Code", null)));
+        minimised.Main!.Id.Should().Be("timer");
+        minimised.Bubble!.Id.Should().Be("media", "another app is in front, so the media activity shows again");
+        minimised.HiddenBecauseAppInFront.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Transients_from_the_app_in_front_still_show()
+    {
+        _manager.Start("p", Specs.Transient("note", ActivityKind.Notification) with { SourceAppId = "Spotify.exe" });
+
+        var layout = PriorityArbiter.Arrange(new ArbiterInput(_manager.Activities, _time.GetUtcNow(), Foreground: new ForegroundApp("Spotify", null)));
+        layout.Transient!.Id.Should().Be("note");
+    }
+
+    [Theory]
+    [InlineData("chrome", null, "Chrome.VXSLNYZIFHXJXHXRSTL6TR5EKU", true)]
+    [InlineData("chrome", null, "Chrome", true)]
+    [InlineData("msedge", null, "MSEdge", true)]
+    [InlineData("Spotify", null, "Spotify.exe", true)]
+    [InlineData("Microsoft.Media.Player", "Microsoft.ZuneMusic_8wekyb3d8bbwe!Microsoft.ZuneMusic", "Microsoft.ZuneMusic_8wekyb3d8bbwe!Microsoft.ZuneMusic", true)]
+    [InlineData("Contoso", "Contoso.App_1!App", "Contoso.App_1!App", true)]
+    [InlineData("chrome", null, "MSEdge", false)]
+    [InlineData("Code", null, "Spotify.exe", false)]
+    [InlineData("debug", null, "", false)]
+    public void Foreground_app_matching(string process, string? aumid, string sourceAppId, bool matches) =>
+        new ForegroundApp(process, aumid).Matches(sourceAppId).Should().Be(matches);
+
+    [Fact]
     public void Timer_promoted_to_85_moves_above_media_and_a_notification_banner_still_wins()
     {
         _manager.Start("p", Specs.Persistent("timer", ActivityKind.Timer));

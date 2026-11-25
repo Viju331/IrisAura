@@ -2,37 +2,6 @@ using Serilog;
 
 namespace IrisAura.Island.Engine;
 
-/// <summary>Where a provider sends its activities. Safe to call from any thread.</summary>
-public interface IActivitySink
-{
-    void Start(ActivitySpec spec);
-
-    void Update(ActivityUpdate update);
-
-    void End(string id, string? finalText = null, TimeSpan? dismissAfter = null);
-
-    /// <summary>Reports an unrecoverable provider error; the host disables the provider and removes its activities.</summary>
-    void ReportFailure(Exception error);
-}
-
-/// <summary>One source of activities (media, power, Bluetooth, SDK, …; BLUEPRINT §8.6).</summary>
-public interface IActivityProvider
-{
-    /// <summary>Stable id, also the owner id of its activities.</summary>
-    string Id { get; }
-
-    string DisplayName { get; }
-
-    /// <summary>Starts producing activities into <paramref name="sink"/>. May throw; the host isolates it.</summary>
-    void Start(IActivitySink sink);
-
-    /// <summary>Stops and releases resources. May throw; the host isolates it.</summary>
-    void Stop();
-
-    /// <summary>A button or gesture on one of this provider's activities.</summary>
-    void OnAction(string activityId, string actionId);
-}
-
 public enum ProviderState
 {
     Registered,
@@ -147,20 +116,22 @@ public sealed class ActivityProviderHost
     }
 
     /// <summary>Routes a button/gesture to the provider that owns <paramref name="activity"/>.</summary>
-    public void DispatchAction(IslandActivity activity, string actionId)
+    /// <returns><see langword="true"/> if the provider handled it.</returns>
+    public bool DispatchAction(IslandActivity activity, string actionId)
     {
         if (!_providers.TryGetValue(activity.ProviderId, out var entry) || entry.State != ProviderState.Running)
         {
-            return;
+            return false;
         }
 
         try
         {
-            entry.Provider.OnAction(activity.Id, actionId);
+            return entry.Provider.OnAction(activity.Id, actionId);
         }
         catch (Exception ex)
         {
             Fault(entry, ex);
+            return false;
         }
     }
 

@@ -70,29 +70,31 @@ public sealed class DebugActivityProvider : IActivityProvider
         _download = null;
     }
 
-    public void OnAction(string activityId, string actionId)
+    public bool OnAction(string activityId, string actionId)
     {
         switch (activityId, actionId)
         {
-            case (MediaId, IslandController.PrimaryAction):
+            case (MediaId, ActivityActions.Primary):
                 Media.TogglePlayPause();
-                break;
-            case (TimerId, IslandController.PrimaryAction):
+                return true;
+            case (TimerId, ActivityActions.Primary):
                 _timer?.ToggleRunning();
-                break;
+                return true;
             case (CallId, "end"):
                 EndCall();
-                break;
+                return true;
             case (DownloadId, "cancel"):
                 _download = null;
                 _sink?.End(DownloadId, "Cancelled", TimeSpan.FromSeconds(2));
-                break;
+                return true;
             case (CustomId, "done"):
                 _sink?.End(CustomId, "Deployed ✓", TimeSpan.FromSeconds(3));
-                break;
+                return true;
             case (CustomId, "fail"):
                 // Simulates a provider bug: the host must disable this provider only.
                 throw new InvalidOperationException("Simulated provider failure (debug action)");
+            default:
+                return false; // e.g. "open": fake activities have no app to open
         }
     }
 

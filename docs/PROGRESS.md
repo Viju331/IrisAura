@@ -174,3 +174,59 @@ Tests: **138 unit tests** (was 83), all passing; build 0 warnings; native x64 bu
 - "Start timer" uses the debug timer until the timer provider (Phase 4).
 - `Navigation` priority 55 (not in the §8.5 table).
 - Queue reachable by mouse wheel / cycle; the "swipe in expanded view" gesture is not implemented (mouse-first desktop).
+
+---
+
+## Phase 3 — IrisAura Island media and waveform
+
+**Branch:** `main` · **Date:** 2026-11-25 · **Status:** ✅ implemented and tested with Media Player, Edge and Chrome on DEV-01; Spotify / Firefox / streaming sites still to test by the owner.
+
+### Scope delivered (BLUEPRINT §8.6.1–§8.6.2, §10 Phase 3)
+
+- **Media provider** (`IrisAura.Island.Providers/Media`): GSMTC session discovery, metadata, artwork (cached when present), playback status, controls, timeline; session selection (playing → system current → paused; switcher choice); reconnect with back-off; de-duplicated, debounced publishing.
+- **Transport controls:** play/pause, previous, next, seek (click the bar), middle-click play/pause; disabled when the app does not allow them.
+- **Timeline interpolation:** position advances between the app's irregular reports, respects playback rate, clamps; bar hidden when the app reports no duration.
+- **Album art and tint:** decoded off the UI thread, dominant colour (excluding near-black/white, brightened for the black pill) tints the waveform; app icon directly on the pill when there is no art (owner request).
+- **Source app:** name and icon (packaged: AppInfo; unpackaged: exe description and shell icon); click on the compact pill or the app badge brings the app to the front.
+- **Waveform:** the app's own audio-session peak (NAudio CoreAudio), device-level fallback, attack/release smoothing, flat when paused; timers only while visible.
+- **Hide while the app is in front (owner request):** a media activity hides while its app is the foreground app and reappears when it is minimised or another app comes forward.
+- **Architecture:** provider contracts moved to `IrisAura.Island.Providers` (§6 layout).
+- **Diagnostics:** `--media-probe report.json` (per-app evidence, no titles); debug panel shows the app in front and what it hides.
+
+### Acceptance criteria (BLUEPRINT §10 Phase 3)
+
+| Criterion | Status | Evidence |
+|---|---|---|
+| Spotify | ⏳ owner | Not installed on DEV-01 |
+| Multiple browsers | ✅ Edge, Chrome · ⏳ Firefox | Table below; Firefox not installed |
+| At least one local player | ✅ Media Player | Table below; the Island showed the real session (self-test info check: "Microsoft.ZuneMusic…, playing") |
+| Document per-app gaps | ✅ | Table below and KNOWN_ISSUES |
+| No claim that all players publish SMTC | ✅ | README / BLUEPRINT wording unchanged; per-app table only lists tested apps |
+
+### Per-app results on DEV-01 (quiet 440 Hz test tone; `docs/evidence/phase-3-probe-*.json`)
+
+| App (session id) | Shown | Title / artist / album | Artwork | Timeline / seek | Next / previous | Own audio level |
+|---|---|---|---|---|---|---|
+| Media Player (`Microsoft.ZuneMusic_8wekyb3d8bbwe!Microsoft.ZuneMusic`) | ✅ | ✅ / — / — (WAV has no tags) | — (no tags) | ✅ 40 s / ✅ | — (single file) | ✅ |
+| Edge (`MSEdge`) | ✅ | ✅ / ✅ / — | ❌ page artwork from `file://` not loaded | ✅ / ✅ | — | ✅ |
+| Chrome (`Chrome.<per-install id>`) | ✅ | ✅ / ✅ / ✅ | ⚠ Chrome's own logo (page artwork from `file://` not loaded) | ✅ / ✅ | — | ✅ after the `Chrome.` prefix fix |
+
+### Tests and measurements
+
+- **201 unit tests** (was 138): timeline, selection, tint, app identity (incl. Chromium prefixes), waveform smoothing, redundant-update detection, provider publish/pause/end/switcher/actions/reconnect/fault, artwork decode and tint on real image bytes, in-front rule and matching.
+- Self-test (`docs/evidence/phase-3-selftest-2026-11-25.json`): 39 pass, 11 fail (startup 1830 ms; dropped frames), 2 inconclusive. Idle CPU 0.039 %, fake waveform 1.131 %.
+- Real Chrome media + live waveform, Island measured from outside over 20 s: **1.445 % and 1.521 %** CPU (machine load 22 % / 44 %), working set 120–127 MB. Before caching images: 3.4–9.3 % ([ADR 0006](DECISIONS/0006-media-and-waveform.md)).
+
+### Owner checks
+
+1. Spotify desktop: title, art, controls, waveform, click opens Spotify.
+2. YouTube / YouTube Music / JioSaavn in Chrome and Edge; Firefox if installed; VLC (needs SMTC support enabled).
+3. Two apps playing: the switcher ("Also: …") in the expanded view.
+4. **The new rule:** play music in Spotify or a browser, keep the app in front → nothing on the Island; minimise it (or click another app) → it appears; click the pill → the app comes forward and the pill hides it again.
+5. Headphones plugged in / unplugged while playing: the waveform keeps moving.
+
+### Deviations (ADR 0006)
+
+- One media activity plus an app switcher instead of one activity per session.
+- "Hide while the app is in front" added at the owner's request (rule: foreground app, not "minimised only").
+- No background colour behind the app icon (owner request).

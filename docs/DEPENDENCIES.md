@@ -16,6 +16,19 @@
 | IrisAura.Contracts | netstandard2.0 | Microsoft.NETCore.Platforms |  | 1.1.0 | transitive |
 | IrisAura.Island | net10.0-windows10.0.19041.0 | Serilog | 4.4.0 | 4.4.0 | direct |
 | IrisAura.Island | net10.0-windows10.0.19041.0 | Serilog.Sinks.File | 7.0.0 | 7.0.0 | direct |
+| IrisAura.Island | net10.0-windows10.0.19041.0 | NAudio |  | 3.3.0 | transitive |
+| IrisAura.Island | net10.0-windows10.0.19041.0 | NAudio.Core |  | 3.3.0 | transitive |
+| IrisAura.Island | net10.0-windows10.0.19041.0 | NAudio.Midi |  | 3.3.0 | transitive |
+| IrisAura.Island | net10.0-windows10.0.19041.0 | NAudio.Wasapi |  | 3.3.0 | transitive |
+| IrisAura.Island | net10.0-windows10.0.19041.0 | NAudio.WinMM |  | 3.3.0 | transitive |
+| IrisAura.Island | net10.0-windows10.0.19041.0 | System.Numerics.Tensors |  | 9.0.0 | transitive |
+| IrisAura.Island.Providers | net10.0-windows10.0.19041.0 | NAudio | 3.3.0 | 3.3.0 | direct |
+| IrisAura.Island.Providers | net10.0-windows10.0.19041.0 | Serilog | 4.4.0 | 4.4.0 | direct |
+| IrisAura.Island.Providers | net10.0-windows10.0.19041.0 | NAudio.Core |  | 3.3.0 | transitive |
+| IrisAura.Island.Providers | net10.0-windows10.0.19041.0 | NAudio.Midi |  | 3.3.0 | transitive |
+| IrisAura.Island.Providers | net10.0-windows10.0.19041.0 | NAudio.Wasapi |  | 3.3.0 | transitive |
+| IrisAura.Island.Providers | net10.0-windows10.0.19041.0 | NAudio.WinMM |  | 3.3.0 | transitive |
+| IrisAura.Island.Providers | net10.0-windows10.0.19041.0 | System.Numerics.Tensors |  | 9.0.0 | transitive |
 | IrisAura.Island.Sdk | netstandard2.0 | NETStandard.Library | [2.0.3, ) | 2.0.3 | direct |
 | IrisAura.Island.Sdk | netstandard2.0 | Microsoft.NETCore.Platforms |  | 1.1.0 | transitive |
 | IrisAura.Island.Tests | net10.0-windows10.0.19041.0 | FluentAssertions | 7.2.2 | 7.2.2 | direct |
@@ -27,8 +40,14 @@
 | IrisAura.Island.Tests | net10.0-windows10.0.19041.0 | Microsoft.Testing.Platform |  | 2.5.2 | transitive |
 | IrisAura.Island.Tests | net10.0-windows10.0.19041.0 | Microsoft.Testing.Platform.MSBuild |  | 2.5.2 | transitive |
 | IrisAura.Island.Tests | net10.0-windows10.0.19041.0 | Microsoft.Win32.Registry |  | 5.0.0 | transitive |
+| IrisAura.Island.Tests | net10.0-windows10.0.19041.0 | NAudio |  | 3.3.0 | transitive |
+| IrisAura.Island.Tests | net10.0-windows10.0.19041.0 | NAudio.Core |  | 3.3.0 | transitive |
+| IrisAura.Island.Tests | net10.0-windows10.0.19041.0 | NAudio.Midi |  | 3.3.0 | transitive |
+| IrisAura.Island.Tests | net10.0-windows10.0.19041.0 | NAudio.Wasapi |  | 3.3.0 | transitive |
+| IrisAura.Island.Tests | net10.0-windows10.0.19041.0 | NAudio.WinMM |  | 3.3.0 | transitive |
 | IrisAura.Island.Tests | net10.0-windows10.0.19041.0 | Serilog |  | 4.4.0 | transitive |
 | IrisAura.Island.Tests | net10.0-windows10.0.19041.0 | Serilog.Sinks.File |  | 7.0.0 | transitive |
+| IrisAura.Island.Tests | net10.0-windows10.0.19041.0 | System.Numerics.Tensors |  | 9.0.0 | transitive |
 | IrisAura.Island.Tests | net10.0-windows10.0.19041.0 | System.Security.AccessControl |  | 6.0.1 | transitive |
 | IrisAura.Island.Tests | net10.0-windows10.0.19041.0 | xunit.analyzers |  | 2.3.0 | transitive |
 | IrisAura.Island.Tests | net10.0-windows10.0.19041.0 | xunit.v3.assert |  | 4.0.3 | transitive |

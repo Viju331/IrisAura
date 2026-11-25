@@ -10,11 +10,17 @@ namespace IrisAura.Island.Engine;
 public sealed record UserPreference(string PreferredMainId, string? PartnerId, int Priority);
 
 /// <summary>Arbiter input.</summary>
+/// <param name="Activities">Live activities.</param>
+/// <param name="Now">Current time.</param>
+/// <param name="QuietMode">Suppress notification banners.</param>
+/// <param name="Preference">User's swap/cycle choice.</param>
+/// <param name="Foreground">App in front; its own persistent activities are not shown (null = rule off / no app).</param>
 public sealed record ArbiterInput(
     IReadOnlyCollection<IslandActivity> Activities,
     DateTimeOffset Now,
     bool QuietMode = false,
-    UserPreference? Preference = null);
+    UserPreference? Preference = null,
+    ForegroundApp? Foreground = null);
 
 /// <summary>Result: what goes where.</summary>
 /// <param name="Transient">Banner/HUD currently taking over the pill, if any.</param>
@@ -25,6 +31,7 @@ public sealed record ArbiterInput(
 /// <param name="Suppressed">Notifications hidden by quiet mode.</param>
 /// <param name="PrivacyIndicators">Mic/camera indicators (drawn as dots, never in the pill).</param>
 /// <param name="NextChangeAt">When the layout may change by time alone (expiry, paused-media grace).</param>
+/// <param name="HiddenAppInFront">Persistent activities hidden because their own app is in front.</param>
 public sealed record ActivityLayout(
     IslandActivity? Transient,
     IslandActivity? Main,
@@ -33,9 +40,12 @@ public sealed record ActivityLayout(
     IReadOnlyList<IslandActivity> WaitingTransients,
     IReadOnlyList<IslandActivity> Suppressed,
     IReadOnlyList<IslandActivity> PrivacyIndicators,
-    DateTimeOffset? NextChangeAt)
+    DateTimeOffset? NextChangeAt,
+    IReadOnlyList<IslandActivity>? HiddenAppInFront = null)
 {
-    public static ActivityLayout Empty { get; } = new(null, null, null, [], [], [], [], null);
+    public static ActivityLayout Empty { get; } = new(null, null, null, [], [], [], [], null, []);
+
+    public IReadOnlyList<IslandActivity> HiddenBecauseAppInFront => HiddenAppInFront ?? [];
 
     /// <summary>Persistent activities in display order: main, bubble, then queue.</summary>
     public IEnumerable<IslandActivity> PersistentInOrder =>
@@ -63,6 +73,7 @@ public static class PriorityArbiter
         var privacy = new List<IslandActivity>();
         var active = new List<IslandActivity>();
         var demoted = new List<IslandActivity>();
+        var hiddenInFront = new List<IslandActivity>();
         DateTimeOffset? next = null;
 
         foreach (var a in input.Activities)
@@ -75,6 +86,10 @@ public static class PriorityArbiter
             if (a.Kind == ActivityKind.PrivacyIndicator)
             {
                 privacy.Add(a);
+            }
+            else if (!a.IsTransient && input.Foreground is { } front && front.Matches(a.SourceAppId))
+            {
+                hiddenInFront.Add(a); // the user is looking at this app already
             }
             else if (a.IsTransient)
             {
@@ -132,7 +147,8 @@ public static class PriorityArbiter
             transients.Skip(1).ToList(),
             suppressed,
             privacy,
-            next);
+            next,
+            hiddenInFront);
     }
 
     /// <summary>Persistent order: priority desc, started earlier first, then id.</summary>

@@ -48,6 +48,15 @@ named reviewer, a date and linked evidence. Independent review means someone oth
 - [x] Tray icon colour reads `HKCU\…\Themes\Personalize\SystemUsesLightTheme` (read-only).
 - [x] New package Serilog / Serilog.Sinks.File: approved in BLUEPRINT §4, pinned, Apache-2.0, recorded in THIRD_PARTY_NOTICES.
 
+### Phase 3 (media and waveform) — self-review, 2026-11-25
+
+- [x] Only documented APIs: GSMTC (Windows.Media.Control), CoreAudio via NAudio, AppInfo, `IApplicationActivationManager`, `SHGetFileInfo`, `GetApplicationUserModelId`. No NPSM or other undocumented media APIs.
+- [x] No input injection: the source app is brought forward only after the user's click, by restoring its window or documented activation.
+- [x] Titles, artists and artwork are never logged or written (log lines carry error types and command names only).
+- [x] Other processes are identified by name / AUMID only, with limited query rights.
+- [x] NAudio 3.3.0 (MIT, approved) added to IrisAura.Island.Providers; recorded in THIRD_PARTY_NOTICES.
+- [x] Browser tests used separate throwaway profiles; the owner's browser profiles were not touched.
+
 ## Findings
 
 | ID | Date | Component | Finding | Severity | Status |

@@ -127,6 +127,9 @@ public partial class IslandWindow : Window
     /// <summary>An animation finished; carries its frame statistics.</summary>
     public event EventHandler<FrameSummary>? AnimationCompleted;
 
+    /// <summary>Click on the compact (not expanded) pill. BLUEPRINT §8.5: open the source app.</summary>
+    public event EventHandler? PillClicked;
+
     /// <summary>Mouse wheel over the pill (delta: positive = away from the user). BLUEPRINT §8.5: cycle activities.</summary>
     public event EventHandler<int>? WheelScrolled;
 
@@ -495,7 +498,16 @@ public partial class IslandWindow : Window
     private void OnPillClicked(object sender, MouseButtonEventArgs e)
     {
         e.Handled = true;
-        TogglePin();
+
+        // BLUEPRINT §8.5: click → open the app, or pin it if it's already expanded.
+        if (!_hover.IsExpanded && PillClicked is not null)
+        {
+            PillClicked.Invoke(this, EventArgs.Empty);
+        }
+        else
+        {
+            TogglePin();
+        }
     }
 
     // ---------------------------------------------------------------- visual state

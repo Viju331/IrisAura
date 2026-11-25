@@ -5,7 +5,10 @@ using System.Windows;
 using System.Windows.Threading;
 using IrisAura.Island.Diagnostics;
 using IrisAura.Island.Engine;
+using IrisAura.Island.Providers.Audio;
+using IrisAura.Island.Providers.Media;
 using IrisAura.Island.Shell;
+using IrisAura.Island.Views;
 using Serilog;
 
 namespace IrisAura.Island;
@@ -36,6 +39,7 @@ public partial class App : Application
     private IslandController? _controller;
     private DebugActivityProvider? _debugProvider;
     private DebugPanelWindow? _debugPanel;
+    private CoreAudioLevelMeter? _levels;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -49,6 +53,30 @@ public partial class App : Application
         var selfTestPath = selfTestIndex >= 0
             ? (selfTestIndex + 1 < args.Length ? args[selfTestIndex + 1] : "island-selftest.json")
             : null;
+
+        var probeIndex = Array.FindIndex(args, a => a.Equals("--media-probe", StringComparison.OrdinalIgnoreCase));
+        if (probeIndex >= 0)
+        {
+            // Diagnostic only: no window, no single-instance lock, no persisted state.
+            var probePath = probeIndex + 1 < args.Length ? args[probeIndex + 1] : "media-probe.json";
+            var artIndex = Array.FindIndex(args, a => a.Equals("--save-artwork", StringComparison.OrdinalIgnoreCase));
+            var artDir = artIndex >= 0 && artIndex + 1 < args.Length ? args[artIndex + 1] : null;
+            Dispatcher.BeginInvoke(new Action(async () =>
+            {
+                var code = 1;
+                try
+                {
+                    code = await MediaProbe.RunAsync(probePath, artDir);
+                }
+                catch (Exception ex)
+                {
+                    File.WriteAllText(probePath, $"{{ \"error\": \"{ex.GetType().Name}\" }}");
+                }
+
+                Shutdown(code);
+            }));
+            return;
+        }
 
         _instanceMutex = new Mutex(initiallyOwned: true, InstanceMutexName, out var createdNew);
         if (!createdNew)
@@ -85,12 +113,24 @@ public partial class App : Application
         _host = new ActivityProviderHost(_manager, SynchronizationContext.Current);
         _debugProvider = new DebugActivityProvider();
         _host.Register(_debugProvider);
+        _host.Register(new MediaProvider(() => new GsmtcMediaSessionSource()));
+        _levels = new CoreAudioLevelMeter();
+        var visuals = new AppVisualsResolver();
 
         // The self-test must not change the user's real persisted state.
         var statePath = selfTestPath is null
             ? IslandStateStore.DefaultPath
             : Path.Combine(Path.GetTempPath(), $"irisaura-selftest-state-{Environment.ProcessId}.json");
-        _controller = new IslandController(_island, _manager, _host, new IslandStateStore(statePath)) { DebugMenuEnabled = debug };
+        var levels = _levels;
+        _controller = new IslandController(
+            _island,
+            _manager,
+            _host,
+            new IslandStateStore(statePath),
+            activity => activity.View is MediaActivityState
+                ? new MediaActivityView(activity, levels, visuals, (id, action) => _controller?.InvokeAction(id, action), id => _controller?.OpenApp(id))
+                : null)
+        { DebugMenuEnabled = debug };
         _controller.QuitRequested += (_, _) => Shutdown(0);
         _controller.DebugPanelRequested += (_, _) => ShowDebugPanel();
         _controller.StartTimerRequested += (_, duration) => _debugProvider.StartTimer(duration); // real timers: Phase 4
@@ -150,6 +190,7 @@ public partial class App : Application
 
         _host?.StopAll();
         _controller?.Dispose();
+        _levels?.Dispose();
         _island?.Close();
         if (_instanceMutex is not null)
         {
