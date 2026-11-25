@@ -381,11 +381,21 @@
   <!-- ===== Generic activities (engine activities without a custom view: SDK, HUDs, calls, downloads) ===== -->
 
   <!-- Filled 16 px glyph from a resource key. -->
+  <!-- Tone (brand tokens only, BLUEPRINT §0.4): Success = Aura.Cyan (charging, connected, done), Alert = Aura.Error
+       (low battery, timer finished). -->
   <DataTemplate x:Key="GenericGlyph">
     <Viewbox Width="16" Height="16">
-      <Path Width="24" Height="24" Stretch="None" Fill="{StaticResource Aura.Frost}"
+      <Path x:Name="Glyph" Width="24" Height="24" Stretch="None" Fill="{StaticResource Aura.Frost}"
             Data="{Binding LeadingGlyph, Converter={StaticResource GlyphKey}}" />
     </Viewbox>
+    <DataTemplate.Triggers>
+      <DataTrigger Binding="{Binding Tone}" Value="Success">
+        <Setter TargetName="Glyph" Property="Fill" Value="{StaticResource Aura.Cyan}" />
+      </DataTrigger>
+      <DataTrigger Binding="{Binding Tone}" Value="Alert">
+        <Setter TargetName="Glyph" Property="Fill" Value="{StaticResource Aura.Error}" />
+      </DataTrigger>
+    </DataTemplate.Triggers>
   </DataTemplate>
 
   <DataTemplate x:Key="Compact.GenericActivityView">
@@ -439,7 +449,7 @@
         <ColumnDefinition Width="40" />
         <ColumnDefinition Width="*" />
       </Grid.ColumnDefinitions>
-      <Border Width="40" Height="40" CornerRadius="10" Background="{StaticResource Aura.Ring}">
+      <Border x:Name="IconBox" Width="40" Height="40" CornerRadius="10" Background="{StaticResource Aura.Ring}">
         <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource GenericGlyph}"
                           HorizontalAlignment="Center" VerticalAlignment="Center" />
       </Border>
@@ -453,6 +463,15 @@
                      Visibility="{Binding HasTrailingProgress, Converter={StaticResource BoolToVisibility}}" />
       </StackPanel>
     </Grid>
+    <DataTemplate.Triggers>
+      <!-- A coloured glyph sits on the dark surface; the Aura ring is kept for neutral banners. -->
+      <DataTrigger Binding="{Binding Tone}" Value="Success">
+        <Setter TargetName="IconBox" Property="Background" Value="{StaticResource Aura.Surface}" />
+      </DataTrigger>
+      <DataTrigger Binding="{Binding Tone}" Value="Alert">
+        <Setter TargetName="IconBox" Property="Background" Value="{StaticResource Aura.Surface}" />
+      </DataTrigger>
+    </DataTemplate.Triggers>
   </DataTemplate>
 
   <DataTemplate x:Key="Bubble.GenericActivityView">
@@ -463,6 +482,47 @@
                              RingBrush="{StaticResource Aura.Blue}" TrackBrush="{StaticResource Aura.Surface}"
                              Visibility="{Binding HasTrailingProgress, Converter={StaticResource BoolToVisibility}}" />
     </Grid>
+  </DataTemplate>
+
+  <!-- ===== Island timer (BLUEPRINT §8.6.10) ===== -->
+
+  <DataTemplate x:Key="Compact.TimerActivityView">
+    <Grid>
+      <controls:ProgressRing Width="18" Height="18" HorizontalAlignment="Left" Margin="11,0,0,0"
+                             Progress="{Binding Progress}" RingBrush="{StaticResource Aura.Cyan}"
+                             TrackBrush="{StaticResource Aura.Surface}" />
+      <TextBlock Text="{Binding RemainingText}" FontSize="13" FontWeight="SemiBold"
+                 Typography.NumeralAlignment="Tabular" Foreground="{StaticResource Aura.Frost}"
+                 HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,15,0" />
+    </Grid>
+  </DataTemplate>
+
+  <DataTemplate x:Key="Expanded.TimerActivityView">
+    <Grid Margin="22,18,22,16">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="*" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+      <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+        <controls:ProgressRing Width="44" Height="44" Thickness="4" Progress="{Binding Progress}"
+                               RingBrush="{StaticResource Aura.Cyan}" TrackBrush="{StaticResource Aura.Surface}" />
+        <StackPanel Margin="16,0,0,0" VerticalAlignment="Center">
+          <TextBlock Text="{Binding Caption}" Style="{StaticResource Caption}" FontSize="12" />
+          <TextBlock Text="{Binding RemainingText}" FontSize="30" FontWeight="SemiBold"
+                     Typography.NumeralAlignment="Tabular" Foreground="{StaticResource Aura.Frost}" />
+        </StackPanel>
+      </StackPanel>
+      <StackPanel Grid.Row="1" Orientation="Horizontal">
+        <Button Style="{StaticResource IslandTextButton}" Content="{Binding ToggleText}" Command="{Binding ToggleCommand}" />
+        <Button Style="{StaticResource IslandTextButton}" Content="+1 min" Command="{Binding AddMinuteCommand}" />
+        <Button Style="{StaticResource IslandTextButton}" Content="Cancel" Command="{Binding CancelCommand}" />
+      </StackPanel>
+    </Grid>
+  </DataTemplate>
+
+  <DataTemplate x:Key="Bubble.TimerActivityView">
+    <controls:ProgressRing Width="18" Height="18" Progress="{Binding Progress}"
+                           RingBrush="{StaticResource Aura.Cyan}" TrackBrush="{StaticResource Aura.Surface}" />
   </DataTemplate>
 
   <!-- ===== Notification banner ===== -->

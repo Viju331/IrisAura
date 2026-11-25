@@ -17,10 +17,20 @@ its own legal review.
 | Data | Source | Stored? | Notes |
 |---|---|---|---|
 | Media title/artist/artwork | Windows media sessions | In memory; artwork cache in memory | Not persisted |
-| Notification title/text | Windows notification listener (user consent) | **In memory only**, cleared on dismiss | "Hide content" option shows the app name only |
-| Mic/camera in-use app names | Windows privacy (ConsentStore) | In memory | Best-effort |
-| Timers, file-shelf paths, settings | User | `%LocalAppData%\IrisAura\` | No content of shelved files is copied |
-| Logs | Island | `%LocalAppData%\IrisAura\logs` | Never notification content, media titles or file names |
+| Notification title/text | Windows notification listener (user consent) | **In memory only**, cleared on dismiss | Not implemented yet (KI-026); "Hide content" option planned |
+| Mic/camera in-use app names | Windows consent store (read-only) and CoreAudio capture sessions (process names) | In memory | Shown as dots and in the menu; never logged. Best-effort (KI-028) |
+| Bluetooth device names and battery | Windows device APIs | In memory, only while the 3 s banner shows | Names are the user's own device names; never logged |
+| Download file names and sizes | File-system events in the Downloads folder (names and sizes only; file contents never read) | In memory while the download shows | Never logged |
+| Volume, brightness, battery level | Windows | Not stored | — |
+| Timer | User | `%LocalAppData%\IrisAura\island-timer.json`: duration and end time only | Deleted when the timer ends or is cancelled |
+| Settings | User | `%LocalAppData%\IrisAura\island-settings.json`: provider id → on/off | — |
+| Quiet mode, hide-until | User | `%LocalAppData%\IrisAura\island-state.json` | — |
+| File-shelf paths | User | `%LocalAppData%\IrisAura\` (Phase 4B) | No content of shelved files is copied |
+| Logs | Island | `%LocalAppData%\IrisAura\logs` | Provider ids, states, error types. Never notification content, media titles, device, app or file names |
+
+Call detection (beta, off by default) uses only which known call app holds the microphone and whether it
+plays audio; it never records or analyses audio. The `--system-probe --probe-mic` diagnostic opens the
+microphone for a few seconds with a visible notice and discards the audio unread.
 
 ## IrisAura Face Lab (Phase 6+)
 

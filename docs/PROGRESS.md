@@ -230,3 +230,93 @@ Tests: **138 unit tests** (was 83), all passing; build 0 warnings; native x64 bu
 - One media activity plus an app switcher instead of one activity per session.
 - "Hide while the app is in front" added at the owner's request (rule: foreground app, not "minimised only").
 - No background colour behind the app icon (owner request).
+
+---
+
+## Phase 4 — IrisAura Island system providers
+
+**Branch:** `main` · **Date:** 2026-11-25 · **Status:** ✅ volume, brightness, power, Bluetooth, privacy indicators, timers and downloads implemented and tested on DEV-01 (live where automation can trigger them); call detection (beta, off by default) implemented; **notifications deferred** pending owner approval of the sparse-package / dev-certificate step (KI-026).
+
+### Scope delivered (BLUEPRINT §8.6.3–§8.6.11, §10 Phase 4; ADR 0007)
+
+| Provider (id) | Source | Shows | Unavailable when |
+|---|---|---|---|
+| Volume (`volume`) | CoreAudio endpoint volume (NAudio), re-subscribes on default-device change | 1.5 s HUD: speaker / muted glyph, level bar, % | no output device |
+| Brightness (`brightness`) | WMI `WmiMonitorBrightnessEvent` | 1.5 s HUD: sun glyph, bar, % | no WMI brightness (desktop / external monitor) |
+| Charging and battery (`power`) | `PowerManager` events | plug-in: bolt, %, bar (2.5 s); low battery at 20 % and 10 % once per discharge (5 s, alert colour) | no battery |
+| Bluetooth devices (`bluetooth`) | `DeviceWatcher` on connected classic + LE endpoints | "&lt;name&gt; Connected" for 3 s, glyph by device class; battery % when Windows exposes it; classic + LE announced once | no adapter |
+| Microphone and camera indicators (`privacy`) | consent store (registry watch) + CoreAudio capture-session notifications for the microphone | violet (mic) / cyan (camera) dots beside the Island; app list in the menu | — |
+| Timers (`timers`) | the Island's own; menu, `Ctrl+Alt+Shift+T` | ring + `mm:ss`; expanded: pause/resume, +1 min, cancel; priority 85 in the last 10 s; "Timer done" banner + sound + shake; survives restarts | — |
+| Downloads (`downloads`) | `FileSystemWatcher` on the Downloads known folder | file name + bytes so far (no %: total unknown), "Done ✓"; click opens the folder | no Downloads folder |
+| Call detection, beta (`calls`, **off by default**) | known call app holds the mic **and** plays audio | call glyph, app, elapsed time, "call detection (beta)"; ends 3 s after the mic is released | — |
+
+Also: an **Activities** submenu (tray and right-click) switches each provider on/off, retries unavailable or failed
+ones, and persists the choice in `island-settings.json`; `ProviderState.Unavailable` and
+`IActivitySink.ReportUnavailable` (missing hardware is not an error); `ActivityTone` (brand-token colours for
+success/alert); 15 new original glyphs (no Bluetooth logo); `--system-probe` diagnostics.
+
+### Acceptance criteria (BLUEPRINT §10 Phase 4)
+
+| Criterion | Status | Evidence |
+|---|---|---|
+| Volume, brightness, power, Bluetooth, privacy indicators, timers, downloads as independent providers | ✅ | One class each in `IrisAura.Island.Providers`; registered separately; host tests |
+| Each provider can be independently disabled/restarted | ✅ | Activities menu; `ProviderHostTests` (disable removes only its activities, StartAll skips disabled, enable restarts, unavailable → retry, stale reports ignored) |
+| Missing API/device support degrades gracefully | ✅ unit + design · ⏳ on a desktop / no-battery device | `ReportUnavailable` path tested; DEV-01 has every device, so the path has not run on real hardware |
+| Notification content not persisted by default | ✅ (nothing collected) | Notifications not implemented (KI-026); PRIVACY.md |
+| Notifications only after package identity, permission UX, privacy handling and build compatibility are proven | ⏳ deferred | Needs owner approval (trust-store change) |
+| Call detection labelled heuristic/beta; never from mic use alone | ✅ | Off by default; label in the activity; `CallDetector` tests (mic alone never starts a call) |
+
+### Evidence on DEV-01 (Windows 11 26H2, build 26300; laptop with battery, WMI brightness, Realtek Bluetooth)
+
+- `--system-probe` (`docs/evidence/phase-4-system-probe-2026-11-25.json`, flags and counts only): the brightness HUD
+  fired **66 ms** after a 1 % change (restored to 70 %); the volume HUD **211 ms** (restored); the microphone opened by
+  the probe was seen by the monitor in **0.37 s** and its release in **0.26 s**; downloads: the Chromium rename
+  sequence, the Firefox `.part` sequence and a cancelled download behaved as expected.
+- **Finding:** the consent store on this build has not been written since 2026-10-12 for any app, and was not written
+  when the probe used the microphone; hence the capture-session source (ADR 0007, KI-028).
+- Live Island (screenshots inspected, not committed): a timer restored from `island-timer.json` after a restart counted
+  down, entered the last-10 s state, ended with the "Timer done · 3 min timer" banner (alert glyph) and deleted its
+  file; the volume HUD showed "Muted" with the crossed speaker (output muted at 100 %); the violet microphone dot
+  appeared beside the timer pill while the probe held the microphone and cleared after release.
+- Bluetooth: the Windows battery property is present for both paired devices (30 % / 90 %); none was connected during
+  the probe, so the live announcement is an owner check.
+- Idle CPU with every provider running, measured from outside (3 × 20 s, two runs): **0.04–0.18 %** (machine load
+  15–18 %); with the privacy provider off 0.08–0.22 %. The first version read audio capture sessions once a second and
+  cost 0.15–0.2 % on its own (self-test 0.312 % / 0.429 %); it is now event-driven (session-created and state
+  notifications). The power provider's first WinRT call (~0.5 s) was moved off the UI thread.
+
+### Tests
+
+- **275 unit tests** (was 201): HUD change detection and specs; battery thresholds per discharge cycle, at startup and
+  on plug-in; Bluetooth class-of-device and LE appearance mapping, battery text, classic + LE de-duplication;
+  consent-store parsing and capture-session merge; privacy provider start/end; indicators never take the pill; call
+  heuristic (corroboration, 3 s grace, packaged apps, provider start/end); timer format, pause/resume/+1 min, 10 s
+  promotion, finish banner, persistence across restarts, missed while closed; download sequences (Chromium, Firefox,
+  cancel, limit, sizes); settings round trip; provider enable/disable/unavailable; 15 new glyphs fit the 24-unit grid.
+- Self-test (`docs/evidence/phase-4-selftest-2026-11-25.json`): **44 pass / 11 fail / 2 inconclusive**. New checks pass:
+  no provider failed at startup (8 running, calls switched off), **idle CPU with all system providers running 0.156 %**,
+  timer shortcut registered, mic indicator dot drawn beside the pill and removed. Idle CPU (providers stopped) 0.039 %.
+  Fails are the known performance items only: startup 807 ms (target 800, KI-012) and 1–2 dropped frames per
+  transition (KI-011). The two full-screen checks stay inconclusive (KI-014).
+
+### Owner checks
+
+1. **Bluetooth:** with the Island running, connect your AirPods (and a mouse or keyboard if you have one): "&lt;name&gt;
+   Connected" with the headphones glyph; the battery % should appear within ~2 s if Windows shows it in Settings.
+2. **Charging:** unplug and plug in the charger: bolt, %, filling bar. Let the battery reach 20 % on battery: one alert banner.
+3. **Volume / brightness keys:** the Island HUD appears (Windows' own flyout still appears too, KI-027).
+4. **Camera:** open the Camera app or a Teams video call: does the cyan dot appear? (It may not on this build, KI-028.)
+   Microphone in Teams / WhatsApp / Sound Recorder: the violet dot appears; right-click the Island to see which app.
+5. **Timer:** right-click → Start timer → 1 min; press `Ctrl+Alt+Shift+T` to pause/resume; hover for pause / +1 min /
+   cancel; quit and restart the Island while it runs: it continues. At the end: banner, sound, shake.
+6. **Downloads:** download a file in Edge, Chrome or Firefox: name + MB, then "Done ✓"; a click opens the Downloads folder.
+7. **Calls (beta):** right-click → Activities → tick "Call detection (beta)", then join a Teams or WhatsApp call.
+8. **Activities menu:** switch a provider off and on; the choice survives a restart.
+
+### Deviations (ADR 0007)
+
+- The microphone indicator also uses CoreAudio capture sessions (consent store not updated on build 26300).
+- Indicator dots use brand colours (violet / cyan) and sit just outside the pill; the app list is in the menu until Phase 4B.
+- Notifications and volume-flyout hiding not built (KI-026, KI-027).
+- Downloads show bytes, with no animated indeterminate bar (CPU budget).
+- Browser calls are not detected (would need window titles).

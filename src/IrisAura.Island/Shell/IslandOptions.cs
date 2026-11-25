@@ -34,4 +34,12 @@ public sealed class IslandOptions
     public uint FocusHotkeyKey { get; set; } = 0x49; // 'I'
 
     public string FocusHotkeyText => "Ctrl+Alt+Shift+I";
+
+    /// <summary>Timer hotkey (BLUEPRINT §8.6.10): Ctrl+Alt+Shift+T starts a 5-minute timer or pauses/resumes it.</summary>
+    public uint TimerHotkeyModifiers { get; set; } =
+        Interop.NativeMethods.MOD_CONTROL | Interop.NativeMethods.MOD_ALT | Interop.NativeMethods.MOD_SHIFT;
+
+    public uint TimerHotkeyKey { get; set; } = 0x54; // 'T'
+
+    public string TimerHotkeyText => "Ctrl+Alt+Shift+T";
 }

@@ -63,7 +63,8 @@
         "dependencies": {
           "IrisAura.Contracts": "[1.0.0, )",
           "NAudio": "[3.3.0, )",
-          "Serilog": "[4.4.0, )"
+          "Serilog": "[4.4.0, )",
+          "System.Management": "[10.0.15, )"
         }
       },
       "irisaura.theme": {
@@ -80,6 +81,12 @@
           "NAudio.Wasapi": "3.3.0",
           "NAudio.WinMM": "3.3.0"
         }
+      },
+      "System.Management": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.15, )",
+        "resolved": "10.0.15",
+        "contentHash": "U21LynVbH2ayLFLTqlLnd3hx52Fe/acpCXO4BAUIqfWs8CwFWT0zxlg8WR2+LZ7zcLgi/d08eq7rp4iLMMt+4w=="
       }
     }
   }

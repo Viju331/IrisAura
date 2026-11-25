@@ -10,10 +10,18 @@ public enum ProviderState
 
     /// <summary>Crashed: disabled, activities removed, error logged (BLUEPRINT §8.9).</summary>
     Faulted,
+
+    /// <summary>Not supported on this device (no battery, no laptop panel, no radio…); not an error.</summary>
+    Unavailable,
 }
 
 /// <summary>Provider status for the debug panel and settings.</summary>
-public sealed record ProviderStatus(string Id, string DisplayName, ProviderState State, string? LastError);
+/// <param name="Id">Provider id.</param>
+/// <param name="DisplayName">Name shown in menus.</param>
+/// <param name="State">Current state.</param>
+/// <param name="LastError">Error (faulted) or reason (unavailable); never user content.</param>
+/// <param name="IsEnabled">The user wants it on (persisted in island-settings.json).</param>
+public sealed record ProviderStatus(string Id, string DisplayName, ProviderState State, string? LastError, bool IsEnabled = true);
 
 /// <summary>
 /// Runs providers in isolation (BLUEPRINT §8.9): an exception from one provider disables only that
@@ -42,21 +50,53 @@ public sealed class ActivityProviderHost
 
     public ProviderStatus? Status(string providerId) => _providers.GetValueOrDefault(providerId)?.Status;
 
-    public void Register(IActivityProvider provider)
+    /// <param name="provider">The provider.</param>
+    /// <param name="enabled">Whether <see cref="StartAll"/> starts it (user setting; BLUEPRINT §10 Phase 4 "each provider can be independently disabled").</param>
+    public void Register(IActivityProvider provider, bool enabled = true)
     {
         if (_providers.ContainsKey(provider.Id))
         {
             throw new InvalidOperationException($"Provider '{provider.Id}' is already registered.");
         }
 
-        _providers[provider.Id] = new Entry(this, provider);
+        _providers[provider.Id] = new Entry(this, provider) { IsEnabled = enabled };
     }
 
+    /// <summary>Starts every enabled provider.</summary>
     public void StartAll()
     {
         foreach (var entry in _providers.Values.ToList())
         {
-            Start(entry.Provider.Id);
+            if (entry.IsEnabled)
+            {
+                Start(entry.Provider.Id);
+            }
+        }
+    }
+
+    /// <summary>Turns a provider on (starts or restarts it) or off (stops it and removes its activities).</summary>
+    public void SetEnabled(string providerId, bool enabled)
+    {
+        var entry = _providers[providerId];
+        entry.IsEnabled = enabled;
+        if (enabled)
+        {
+            if (entry.State != ProviderState.Running)
+            {
+                Start(providerId);
+            }
+            else
+            {
+                ProviderStateChanged?.Invoke(this, entry.Status);
+            }
+        }
+        else if (entry.State == ProviderState.Running)
+        {
+            Stop(providerId);
+        }
+        else
+        {
+            ProviderStateChanged?.Invoke(this, entry.Status);
         }
     }
 
@@ -92,6 +132,7 @@ public sealed class ActivityProviderHost
         }
     }
 
+    /// <summary>Stops a provider (it stays enabled; <see cref="Start"/> or <see cref="StartAll"/> runs it again).</summary>
     public void Stop(string providerId)
     {
         var entry = _providers[providerId];
@@ -161,6 +202,30 @@ public sealed class ActivityProviderHost
         ProviderStateChanged?.Invoke(this, entry.Status);
     }
 
+    private void MarkUnavailable(Entry entry, string reason)
+    {
+        if (entry.State != ProviderState.Running)
+        {
+            return;
+        }
+
+        entry.Sink?.Close();
+        entry.State = ProviderState.Unavailable;
+        entry.LastError = reason;
+        Log.Information("Island provider {Provider} unavailable on this device: {Reason}", entry.Provider.Id, reason);
+        try
+        {
+            entry.Provider.Stop();
+        }
+        catch (Exception stopError)
+        {
+            Log.Warning("Island provider {Provider} failed to stop: {Error}", entry.Provider.Id, stopError.GetType().Name);
+        }
+
+        _manager.EndAllFrom(entry.Provider.Id);
+        ProviderStateChanged?.Invoke(this, entry.Status);
+    }
+
     private void Apply(Entry entry, Operation op)
     {
         if (entry.State != ProviderState.Running)
@@ -201,7 +266,9 @@ public sealed class ActivityProviderHost
 
         public Sink? Sink { get; set; }
 
-        public ProviderStatus Status => new(Provider.Id, Provider.DisplayName, State, LastError);
+        public bool IsEnabled { get; set; } = true;
+
+        public ProviderStatus Status => new(Provider.Id, Provider.DisplayName, State, LastError, IsEnabled);
 
         public ActivityProviderHost Host { get; } = host;
     }
@@ -233,6 +300,39 @@ public sealed class ActivityProviderHost
             else
             {
                 host._context.Post(_ => host.Fault(entry, error), null);
+            }
+        }
+
+        public void ReportUnavailable(string reason)
+        {
+            // A sink from an earlier run (closed) must not affect a restarted provider.
+            if (host._context is null)
+            {
+                if (!IsClosed)
+                {
+                    host.MarkUnavailable(entry, reason);
+                }
+            }
+            else
+            {
+                host._context.Post(_ =>
+                {
+                    if (!IsClosed)
+                    {
+                        host.MarkUnavailable(entry, reason);
+                    }
+                }, null);
+            }
+        }
+
+        private bool IsClosed
+        {
+            get
+            {
+                lock (_gate)
+                {
+                    return _closed;
+                }
             }
         }
 

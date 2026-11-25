@@ -207,6 +207,86 @@ public sealed class ProviderHostTests
         act.Should().Throw<InvalidOperationException>();
     }
 
+    // ---------------------------------------------------------------- Phase 4: enable/disable, unavailable
+
+    [Fact]
+    public void Disabled_provider_is_not_started_until_enabled()
+    {
+        var host = new ActivityProviderHost(_manager, null);
+        var calls = new TestProvider("calls");
+        host.Register(calls, enabled: false);
+
+        host.StartAll();
+        host.Status("calls")!.State.Should().Be(ProviderState.Registered);
+        host.Status("calls")!.IsEnabled.Should().BeFalse();
+        calls.Sink.Should().BeNull();
+
+        host.SetEnabled("calls", true);
+        host.Status("calls")!.State.Should().Be(ProviderState.Running);
+        host.Status("calls")!.IsEnabled.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Disabling_a_provider_stops_it_and_removes_its_activities()
+    {
+        var host = new ActivityProviderHost(_manager, null);
+        var volume = new TestProvider("volume");
+        var other = new TestProvider("other");
+        host.Register(volume);
+        host.Register(other);
+        host.StartAll();
+        volume.Sink!.Start(Specs.Persistent("v"));
+        other.Sink!.Start(Specs.Persistent("o"));
+
+        host.SetEnabled("volume", false);
+
+        volume.Stopped.Should().BeTrue();
+        host.Status("volume")!.State.Should().Be(ProviderState.Stopped);
+        _manager.Find("v").Should().BeNull();
+        _manager.Find("o").Should().NotBeNull();
+        host.StartAll();
+        host.Status("volume")!.State.Should().Be(ProviderState.Stopped, "StartAll skips providers the user switched off");
+    }
+
+    [Fact]
+    public void Unavailable_provider_is_stopped_quietly_and_can_be_retried()
+    {
+        var host = new ActivityProviderHost(_manager, null);
+        var power = new TestProvider("power");
+        host.Register(power);
+        host.StartAll();
+        power.Sink!.Start(Specs.Persistent("p"));
+
+        power.Sink.ReportUnavailable("no battery");
+
+        host.Status("power")!.State.Should().Be(ProviderState.Unavailable);
+        host.Status("power")!.LastError.Should().Be("no battery");
+        host.Status("power")!.IsEnabled.Should().BeTrue("unavailable is not the user switching it off");
+        power.Stopped.Should().BeTrue();
+        _manager.Find("p").Should().BeNull();
+
+        host.SetEnabled("power", true); // retry (e.g. a battery or radio appeared)
+        host.Status("power")!.State.Should().Be(ProviderState.Running);
+    }
+
+    [Fact]
+    public void Unavailable_report_from_an_earlier_run_does_not_affect_a_restarted_provider()
+    {
+        var context = new ManualSynchronizationContext();
+        var host = new ActivityProviderHost(_manager, context);
+        var bt = new TestProvider("bluetooth");
+        host.Register(bt);
+        host.StartAll();
+        var oldSink = bt.Sink!;
+        host.Stop("bluetooth");
+        host.Start("bluetooth");
+
+        oldSink.ReportUnavailable("late report");
+        context.RunAll();
+
+        host.Status("bluetooth")!.State.Should().Be(ProviderState.Running);
+    }
+
     private sealed class TestProvider(string id) : IActivityProvider
     {
         public string Id => id;

@@ -22,12 +22,26 @@ public enum ActivityKind
     Custom,
 }
 
+/// <summary>Colour role of an activity's icon, from the brand tokens only (BLUEPRINT §0.4).</summary>
+public enum ActivityTone
+{
+    /// <summary>Aura ring / Frost.</summary>
+    Default,
+
+    /// <summary>Aura.Cyan: charging, connected, done.</summary>
+    Success,
+
+    /// <summary>Aura.Error: low battery, timer finished.</summary>
+    Alert,
+}
+
 /// <summary>Compact (leading + trailing) content. <see cref="LeadingGlyph"/> is a resource key such as "Aura.Glyph.Play".</summary>
 public sealed record CompactContent(
     string? LeadingGlyph = null,
     string? LeadingText = null,
     string? TrailingText = null,
-    double? TrailingProgress = null);
+    double? TrailingProgress = null,
+    ActivityTone Tone = ActivityTone.Default);
 
 /// <summary>A button in the expanded view; pressing it is routed back to the owning provider.</summary>
 public sealed record ActivityButton(string Id, string Label);
@@ -149,6 +163,14 @@ public interface IActivitySink
 
     /// <summary>Reports an unrecoverable provider error; the host disables the provider and removes its activities.</summary>
     void ReportFailure(Exception error);
+
+    /// <summary>
+    /// Reports that the provider cannot work on this device (no battery, no laptop panel, no Bluetooth radio, API
+    /// missing on this Windows build). The host stops it quietly and shows it as unavailable; it is not an error
+    /// (BLUEPRINT §10 Phase 4: "missing API/device support degrades gracefully"). <paramref name="reason"/> must not
+    /// contain user content.
+    /// </summary>
+    void ReportUnavailable(string reason);
 }
 
 /// <summary>One source of activities (media, power, Bluetooth, SDK, …; BLUEPRINT §8.6).</summary>
@@ -178,4 +200,13 @@ public static class ActivityActions
 
     /// <summary>Click on the compact pill: bring the source app to the front.</summary>
     public const string Open = "open";
+
+    /// <summary>Timer: pause or resume.</summary>
+    public const string Toggle = "toggle";
+
+    /// <summary>Timer: add one minute.</summary>
+    public const string AddMinute = "add-minute";
+
+    /// <summary>Timer / download: cancel or dismiss.</summary>
+    public const string Cancel = "cancel";
 }

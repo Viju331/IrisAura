@@ -16,13 +16,13 @@ IrisAura is a Windows desktop product with two parts:
 
 ## Project status
 
-**Phase 3 — real media.** The Island shows what's playing in any app that publishes to the Windows
-media controls (tested: Media Player, Edge, Chrome): title, artist, album art with a colour tint,
-live progress, play/pause/next/previous/seek, a waveform from the app's own audio, and a click opens
-the app. While the app itself is in front, the Island hides its activity; minimise it and it appears.
-Built on the activity engine (Phase 2: priorities, split bubble, banners, quiet mode, tray menu).
-System providers (volume, battery, Bluetooth, timers…) and the SDK come in Phases 4–5. Progress and test evidence are in
-[docs/PROGRESS.md](docs/PROGRESS.md); the full plan is in [docs/BLUEPRINT.md](docs/BLUEPRINT.md).
+**Phase 4 — system providers.** On top of real media (Phase 3) and the activity engine (Phase 2), the
+Island now shows volume and brightness HUDs, charging and low-battery banners, Bluetooth devices connecting
+(with battery when Windows reports it), microphone/camera-in-use dots, its own timers (menu or
+**Ctrl+Alt+Shift+T**; they survive restarts) and downloads in progress. Call detection is a beta, off by
+default. Each of these can be switched off under **Activities** in the right-click or tray menu. Notifications
+and the SDK come later (Phase 5). Progress and test evidence are in [docs/PROGRESS.md](docs/PROGRESS.md); the
+full plan is in [docs/BLUEPRINT.md](docs/BLUEPRINT.md).
 
 ### Trying the Island (development build)
 
@@ -36,6 +36,7 @@ src/IrisAura.Island/bin/Release/net10.0-windows10.0.19041.0/IrisAura.Island.exe 
 | `IrisAura.Island.exe --debug` | Starts the Island with the debug panel (fake media, timer, split, banner, options, live stats) |
 | `IrisAura.Island.exe --quit` | Closes the running Island |
 | `IrisAura.Island.exe --selftest report.json` | Runs the integration self-test (focus, click-through, placement, full screen, CPU, frames) and writes a report |
+| `IrisAura.Island.exe --system-probe report.json [--nudge-volume] [--nudge-brightness] [--probe-mic]` | Checks volume, brightness, battery, Bluetooth, microphone and download detection on this PC (no names recorded; nudges are ±1 % and restored) |
 
 Hover the pill to expand it, click to pin it, click the bubble to swap, scroll over the pill to cycle
 activities, right-click the pill or the tray icon for the menu, press **Ctrl+Alt+Shift+I** to control it

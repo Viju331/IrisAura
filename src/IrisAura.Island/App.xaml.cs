@@ -6,7 +6,14 @@ using System.Windows.Threading;
 using IrisAura.Island.Diagnostics;
 using IrisAura.Island.Engine;
 using IrisAura.Island.Providers.Audio;
+using IrisAura.Island.Providers.Calls;
+using IrisAura.Island.Providers.Devices;
+using IrisAura.Island.Providers.Downloads;
+using IrisAura.Island.Providers.Hud;
 using IrisAura.Island.Providers.Media;
+using IrisAura.Island.Providers.Power;
+using IrisAura.Island.Providers.Privacy;
+using IrisAura.Island.Providers.Timers;
 using IrisAura.Island.Shell;
 using IrisAura.Island.Views;
 using Serilog;
@@ -40,6 +47,8 @@ public partial class App : Application
     private DebugActivityProvider? _debugProvider;
     private DebugPanelWindow? _debugPanel;
     private CoreAudioLevelMeter? _levels;
+    private CapabilityUsageMonitor? _capabilities;
+    private TimerProvider? _timers;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -67,6 +76,29 @@ public partial class App : Application
                 try
                 {
                     code = await MediaProbe.RunAsync(probePath, artDir);
+                }
+                catch (Exception ex)
+                {
+                    File.WriteAllText(probePath, $"{{ \"error\": \"{ex.GetType().Name}\" }}");
+                }
+
+                Shutdown(code);
+            }));
+            return;
+        }
+
+        var systemProbeIndex = Array.FindIndex(args, a => a.Equals("--system-probe", StringComparison.OrdinalIgnoreCase));
+        if (systemProbeIndex >= 0)
+        {
+            // Diagnostic only (Phase 4 evidence): no window, no single-instance lock, no persisted state.
+            var probePath = systemProbeIndex + 1 < args.Length ? args[systemProbeIndex + 1] : "system-probe.json";
+            bool Has(string flag) => args.Contains(flag, StringComparer.OrdinalIgnoreCase);
+            Dispatcher.BeginInvoke(new Action(async () =>
+            {
+                var code = 1;
+                try
+                {
+                    code = await SystemProbe.RunAsync(probePath, Has("--nudge-volume"), Has("--nudge-brightness"), Has("--probe-mic"));
                 }
                 catch (Exception ex)
                 {
@@ -111,29 +143,58 @@ public partial class App : Application
         _island = new IslandWindow(_options);
         _manager = new ActivityManager(TimeProvider.System);
         _host = new ActivityProviderHost(_manager, SynchronizationContext.Current);
-        _debugProvider = new DebugActivityProvider();
-        _host.Register(_debugProvider);
-        _host.Register(new MediaProvider(() => new GsmtcMediaSessionSource()));
         _levels = new CoreAudioLevelMeter();
         var visuals = new AppVisualsResolver();
 
-        // The self-test must not change the user's real persisted state.
-        var statePath = selfTestPath is null
-            ? IslandStateStore.DefaultPath
-            : Path.Combine(Path.GetTempPath(), $"irisaura-selftest-state-{Environment.ProcessId}.json");
+        // The self-test must not change the user's real persisted state, settings or timer.
+        string StatePath(string defaultPath, string name) => selfTestPath is null
+            ? defaultPath
+            : Path.Combine(Path.GetTempPath(), $"irisaura-selftest-{name}-{Environment.ProcessId}.json");
+        var statePath = StatePath(IslandStateStore.DefaultPath, "state");
+        var settingsStore = new IslandSettingsStore(StatePath(IslandSettingsStore.DefaultPath, "settings"));
+        var settings = settingsStore.Load();
+
+        // Providers (BLUEPRINT §8.6). Each can be switched off in the Activities menu (island-settings.json).
+        _debugProvider = new DebugActivityProvider();
+        _capabilities = new CapabilityUsageMonitor();
+        _timers = new TimerProvider(new TimerStore(StatePath(TimerStore.DefaultPath, "timer")));
+        void Add(IActivityProvider provider, bool enabledByDefault = true) =>
+            _host.Register(provider, settings.IsEnabled(provider.Id, enabledByDefault));
+        Add(_debugProvider);
+        Add(new MediaProvider(() => new GsmtcMediaSessionSource()));
+        Add(new VolumeProvider());
+        Add(new BrightnessProvider());
+        Add(new PowerProvider());
+        Add(new BluetoothProvider());
+        Add(new PrivacyProvider(_capabilities));
+        Add(_timers);
+        Add(new DownloadsProvider());
+        Add(new CallProvider(_capabilities, new AudioSessionActivity()), enabledByDefault: false); // beta (§8.6.8)
         var levels = _levels;
         _controller = new IslandController(
             _island,
             _manager,
             _host,
             new IslandStateStore(statePath),
-            activity => activity.View is MediaActivityState
-                ? new MediaActivityView(activity, levels, visuals, (id, action) => _controller?.InvokeAction(id, action), id => _controller?.OpenApp(id))
-                : null)
-        { DebugMenuEnabled = debug };
+            activity => activity.View switch
+            {
+                MediaActivityState => new MediaActivityView(activity, levels, visuals, (id, action) => _controller?.InvokeAction(id, action), id => _controller?.OpenApp(id)),
+                TimerState => new TimerActivityView(activity, (id, action) => _controller?.InvokeAction(id, action)),
+                _ => null,
+            },
+            settingsStore)
+        { DebugMenuEnabled = debug, TimerProviderId = TimerProvider.ProviderId };
+        _controller.HiddenProviders.Add(DebugActivityProvider.ProviderId);
         _controller.QuitRequested += (_, _) => Shutdown(0);
         _controller.DebugPanelRequested += (_, _) => ShowDebugPanel();
-        _controller.StartTimerRequested += (_, duration) => _debugProvider.StartTimer(duration); // real timers: Phase 4
+        var timers = _timers;
+        _controller.StartTimerRequested += (_, duration) => timers.StartTimer(duration);
+        _island.TimerHotkeyPressed += (_, _) => timers.StartOrToggle();
+        timers.Finished += (_, _) => Dispatcher.BeginInvoke(new Action(() =>
+        {
+            System.Media.SystemSounds.Asterisk.Play(); // §8.6.10: banner, sound and shake
+            _island.Shake();
+        }));
 
         var processStart = Process.GetCurrentProcess().StartTime;
         _island.ContentRendered += (_, _) =>
@@ -191,6 +252,7 @@ public partial class App : Application
         _host?.StopAll();
         _controller?.Dispose();
         _levels?.Dispose();
+        _capabilities?.Dispose();
         _island?.Close();
         if (_instanceMutex is not null)
         {

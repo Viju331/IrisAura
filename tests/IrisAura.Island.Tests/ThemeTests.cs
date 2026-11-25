@@ -61,6 +61,21 @@ public sealed class ThemeTests
     [InlineData("Aura.Glyph.Pause")]
     [InlineData("Aura.Glyph.Previous")]
     [InlineData("Aura.Glyph.Next")]
+    [InlineData("Aura.Glyph.Volume")]
+    [InlineData("Aura.Glyph.VolumeMute")]
+    [InlineData("Aura.Glyph.Brightness")]
+    [InlineData("Aura.Glyph.Bolt")]
+    [InlineData("Aura.Glyph.BatteryLow")]
+    [InlineData("Aura.Glyph.Headphones")]
+    [InlineData("Aura.Glyph.Mouse")]
+    [InlineData("Aura.Glyph.Keyboard")]
+    [InlineData("Aura.Glyph.Phone")]
+    [InlineData("Aura.Glyph.Device")]
+    [InlineData("Aura.Glyph.Timer")]
+    [InlineData("Aura.Glyph.Download")]
+    [InlineData("Aura.Glyph.Mic")]
+    [InlineData("Aura.Glyph.Camera")]
+    [InlineData("Aura.Glyph.Call")]
     public void Glyph_fits_the_24_unit_design_grid(string key)
     {
         StaThread.Run(() =>

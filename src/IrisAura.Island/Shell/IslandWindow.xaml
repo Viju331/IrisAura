@@ -59,5 +59,13 @@
 
       <ContentPresenter x:Name="BubbleContent" HorizontalAlignment="Center" VerticalAlignment="Center" />
     </Border>
+
+    <!-- Microphone / camera in use (BLUEPRINT §8.6.7). Brand colours, not the orange/green of other platforms. -->
+    <StackPanel x:Name="PrivacyDots" Orientation="Horizontal" Visibility="Collapsed" IsHitTestVisible="False" Height="7">
+      <Ellipse x:Name="MicDot" Width="7" Height="7" Fill="{StaticResource Aura.Violet}" Visibility="Collapsed"
+               AutomationProperties.Name="Microphone in use" />
+      <Ellipse x:Name="CameraDot" Width="7" Height="7" Margin="4,0,0,0" Fill="{StaticResource Aura.Cyan}" Visibility="Collapsed"
+               AutomationProperties.Name="Camera in use" />
+    </StackPanel>
   </Canvas>
 </Window>

@@ -1,0 +1,60 @@
+{
+  "generatedAt": "2026-11-25T15:53:13.4822281\u002B05:30",
+  "windowsBuild": "10.0.26300.0",
+  "power": {
+    "HasBattery": true,
+    "PluggedIn": true,
+    "Percent": 87
+  },
+  "brightness": {
+    "wmiBrightnessAvailable": true,
+    "currentPercent": 70,
+    "nudged": true,
+    "hudShown": true,
+    "hudText": "71%",
+    "latencyMs": 66,
+    "unavailableReason": null,
+    "restoredPercent": 70
+  },
+  "volume": {
+    "outputDevice": true,
+    "levelPercent": 100,
+    "nudged": true,
+    "hudShown": true,
+    "hudText": "Muted",
+    "latencyMs": 211,
+    "hudsShownTotal": 2,
+    "restored": true
+  },
+  "bluetooth": {
+    "adapter": true,
+    "connectedClassicEndpoints": 0,
+    "connectedLeEndpoints": 0,
+    "connectedDevices": [],
+    "note": "connect/disconnect announcements need a device to connect while the Island runs (owner check)"
+  },
+  "privacy": {
+    "consentStoreMicrophoneUsersNow": 0,
+    "consentStoreCameraUsersNow": 0,
+    "micOpened": true,
+    "capturePackets": 38,
+    "captureError": null,
+    "consentStoreRecordedIt": false,
+    "monitorSawStartMs": 368,
+    "monitorSawStopMs": 255
+  },
+  "downloads": {
+    "downloadsFolderFound": true,
+    "simulatedInTempFolder": true,
+    "activityStarts": 7,
+    "sizesReported": [
+      "1 KB",
+      "2.0 MB",
+      "Done \u2713",
+      "4 KB",
+      "0 B"
+    ],
+    "ended": 3,
+    "endedWithDone": 2
+  }
+}

@@ -57,6 +57,26 @@ named reviewer, a date and linked evidence. Independent review means someone oth
 - [x] NAudio 3.3.0 (MIT, approved) added to IrisAura.Island.Providers; recorded in THIRD_PARTY_NOTICES.
 - [x] Browser tests used separate throwaway profiles; the owner's browser profiles were not touched.
 
+### Phase 4 (system providers) — self-review, 2026-11-25
+
+- [x] Only documented APIs: CoreAudio endpoint volume and session state (NAudio), WMI `WmiMonitorBrightnessEvent`,
+      `Windows.System.Power.PowerManager`, `DeviceWatcher` / `BluetoothDevice` / `BluetoothLEDevice` / device properties,
+      `RegNotifyChangeKeyValue` (read-only watch of the user's consent store), `SHGetKnownFolderPath`, `FileSystemWatcher`,
+      `RegisterHotKey`. No undocumented CapabilityAccessManager interfaces, no shell-window manipulation (volume flyout
+      hiding deliberately not built, KI-027).
+- [x] No input injection. The timer shortcut is a registered hotkey (`Ctrl+Alt+Shift+T`, no Windows key).
+- [x] Logs carry provider ids, states and error types only; no device names, app names, file names or levels.
+- [x] Persisted: provider on/off flags and the timer's duration/end time; nothing else (PRIVACY.md).
+- [x] Downloads: file names and sizes only; file contents are never opened. "Open" launches the Downloads folder via
+      the shell after the user's click.
+- [x] Call detection never reads audio, window titles or notification text; off by default and labelled beta.
+- [x] Notifications not implemented: the sparse package needs a development certificate trusted on the machine (trust
+      store change) and package registration; waiting for owner approval (KI-026).
+- [x] `--system-probe` diagnostics change volume/brightness by 1 % and restore them, and open the microphone only with
+      explicit flags and a visible notice; audio is discarded unread; the report holds no names.
+- [x] New package System.Management 10.0.15 (approved in BLUEPRINT §4, MIT), pinned; THIRD_PARTY_NOTICES and
+      DEPENDENCIES updated.
+
 ## Findings
 
 | ID | Date | Component | Finding | Severity | Status |

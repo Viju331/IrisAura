@@ -76,7 +76,34 @@ internal sealed class SelfTest(
         Info("real media session (Windows media controls)", real is null
             ? $"none playing or paused (provider {host.Status(MediaProvider.ProviderId)?.State})"
             : $"app {real.SourceAppId}, {(real.PausedSince is null ? "playing" : "paused")}");
-        host.Stop(MediaProvider.ProviderId);
+        // System providers (Phase 4): states recorded, none may have failed; then every real provider is stopped
+        // so the checks below see only the fake activities.
+        foreach (var provider in host.Providers.Where(p => p.Id != DebugActivityProvider.ProviderId))
+        {
+            Info($"provider {provider.Id}", provider.IsEnabled
+                ? $"{provider.State}{(provider.LastError is null ? string.Empty : " (" + provider.LastError + ")")}"
+                : "switched off");
+        }
+
+        // Idle CPU with every real provider running (event-driven watchers, the 1 s microphone session check).
+        if (controller.Layout.Main is null && controller.Layout.Transient is null)
+        {
+            var withProviders = await MeasureCpuMedianAsync(TimeSpan.FromSeconds(3), samples: 3);
+            _metrics["idleCpuWithSystemProviders"] = withProviders;
+            Add($"idle CPU with system providers running < {IdleCpuTargetPercent}%", withProviders.MedianPercent < IdleCpuTargetPercent, withProviders.ToString());
+        }
+        else
+        {
+            Info("idle CPU with system providers running", "skipped: a real activity is showing");
+        }
+
+        var faulted = host.Providers.Where(p => p.State == ProviderState.Faulted).Select(p => p.Id).ToList();
+        Add("no provider failed at startup", faulted.Count == 0, faulted.Count == 0 ? "none faulted" : string.Join(", ", faulted));
+        foreach (var provider in host.Providers.Where(p => p.Id != DebugActivityProvider.ProviderId))
+        {
+            host.Stop(provider.Id);
+        }
+
         await SettleAsync();
 
         // ---- startup, styles, placement
@@ -90,6 +117,7 @@ internal sealed class SelfTest(
         Add("window is topmost", (style & WS_EX_TOPMOST) != 0, $"exstyle 0x{style:X}");
         Add("idle pill is click-through", island.IsClickThrough && (style & WS_EX_TRANSPARENT) != 0, $"exstyle 0x{style:X}");
         Add("focus shortcut registered (Ctrl+Alt+Shift+I)", island.HotkeyRegistered, island.HotkeyRegistered ? "registered" : "in use by another app");
+        Add("timer shortcut registered (Ctrl+Alt+Shift+T)", island.TimerHotkeyRegistered, island.TimerHotkeyRegistered ? "registered" : "in use by another app");
 
         var monitor = island.CurrentMonitor;
         var expected = PlacementCalculator.Compute(monitor, IslandLayout.WindowWidth, IslandLayout.WindowHeight);
@@ -161,6 +189,19 @@ internal sealed class SelfTest(
 
         // ---- activity engine integration
         await EngineAsync();
+
+        // ---- privacy dots (Phase 4): drawn beside whatever is shown, never in the pill
+        driver.Show(FakeScenario.Media);
+        await SettleAsync();
+        driver.PrivacyIndicator(microphone: true, camera: false);
+        await SettleAsync();
+        Add("mic indicator: dot drawn, pill keeps its activity",
+            island.MicrophoneDotVisible && !island.CameraDotVisible && controller.Layout.Main?.Id == DebugActivityProvider.MediaId,
+            $"mic dot {island.MicrophoneDotVisible}, camera dot {island.CameraDotVisible}, main {controller.Layout.Main?.Id}");
+        driver.PrivacyIndicator(microphone: false, camera: false);
+        await SettleAsync();
+        Add("indicator ended: dot removed", !island.MicrophoneDotVisible && !island.CameraDotVisible,
+            $"mic dot {island.MicrophoneDotVisible}, camera dot {island.CameraDotVisible}");
 
         // ---- full screen
         await FullscreenAsync(monitor);

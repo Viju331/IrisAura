@@ -32,6 +32,8 @@ namespace IrisAura.Island.Shell;
 public partial class IslandWindow : Window
 {
     private const int FocusHotkeyId = 0x4941;
+    private const int TimerHotkeyId = 0x4942;
+    private const double PrivacyDotGap = 7;
     private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(1000.0 / 30);
     private static readonly TimeSpan FarPollInterval = TimeSpan.FromMilliseconds(100);
     private const double NearCursorMargin = 120;
@@ -139,6 +141,9 @@ public partial class IslandWindow : Window
     /// <summary>Right click on the pill or bubble, with the cursor position in screen pixels.</summary>
     public event EventHandler<(int X, int Y)>? ContextMenuRequested;
 
+    /// <summary>The timer shortcut (Ctrl+Alt+Shift+T) was pressed.</summary>
+    public event EventHandler? TimerHotkeyPressed;
+
     /// <summary>The focus shortcut was pressed while the user had hidden the Island (show it again).</summary>
     public event EventHandler? HotkeyPressedWhileHidden;
 
@@ -167,6 +172,14 @@ public partial class IslandWindow : Window
     public bool IsPinned => _hover.IsPinned;
 
     public bool HotkeyRegistered { get; private set; }
+
+    public bool TimerHotkeyRegistered { get; private set; }
+
+    /// <summary>Microphone dot shown (BLUEPRINT §8.6.7).</summary>
+    public bool MicrophoneDotVisible => MicDot.Visibility == Visibility.Visible;
+
+    /// <summary>Camera dot shown.</summary>
+    public bool CameraDotVisible => CameraDot.Visibility == Visibility.Visible;
 
     public FrameSummary LastAnimation { get; private set; }
 
@@ -206,6 +219,12 @@ public partial class IslandWindow : Window
             Trace.TraceWarning($"IrisAura.Island: focus shortcut {_options.FocusHotkeyText} is in use by another app; left unbound.");
         }
 
+        TimerHotkeyRegistered = RegisterHotKey(_hwnd, TimerHotkeyId, _options.TimerHotkeyModifiers | MOD_NOREPEAT, _options.TimerHotkeyKey);
+        if (!TimerHotkeyRegistered)
+        {
+            Trace.TraceWarning($"IrisAura.Island: timer shortcut {_options.TimerHotkeyText} is in use by another app; left unbound.");
+        }
+
         NativeMethods.ForegroundChanged += OnForegroundChanged;
         NativeMethods.StartForegroundHook();
         SystemEvents.DisplaySettingsChanged += OnDisplaySettingsChanged;
@@ -233,6 +252,11 @@ public partial class IslandWindow : Window
         if (HotkeyRegistered)
         {
             UnregisterHotKey(_hwnd, FocusHotkeyId);
+        }
+
+        if (TimerHotkeyRegistered)
+        {
+            UnregisterHotKey(_hwnd, TimerHotkeyId);
         }
 
         _source?.RemoveHook(WndProc);
@@ -266,6 +290,11 @@ public partial class IslandWindow : Window
 
                 break;
 
+            case WM_HOTKEY when wParam == TimerHotkeyId:
+                handled = true;
+                TimerHotkeyPressed?.Invoke(this, EventArgs.Empty);
+                break;
+
             case WM_SETTINGCHANGE:
                 SettingChangeMessages++;
                 Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(Reposition));
@@ -293,6 +322,19 @@ public partial class IslandWindow : Window
         }
 
         UpdateVisual();
+    }
+
+    /// <summary>
+    /// Microphone / camera in use (BLUEPRINT §8.6.7): small dots just past the trailing edge of the Island, drawn on
+    /// whatever it shows (also when idle). Brand colours: microphone Aura.Violet, camera Aura.Cyan.
+    /// </summary>
+    public void SetPrivacyIndicators(bool microphone, bool camera)
+    {
+        MicDot.Visibility = microphone ? Visibility.Visible : Visibility.Collapsed;
+        CameraDot.Visibility = camera ? Visibility.Visible : Visibility.Collapsed;
+        PrivacyDots.Visibility = microphone || camera ? Visibility.Visible : Visibility.Collapsed;
+        ApplyGeometry();
+        StatusChanged?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>Failure shake (BLUEPRINT §8.4); a brief error tint instead when motion is reduced.</summary>
@@ -794,6 +836,15 @@ public partial class IslandWindow : Window
         {
             Bubble.Visibility = Visibility.Collapsed;
             BubbleShadow.Visibility = Visibility.Collapsed;
+        }
+
+        if (PrivacyDots.Visibility == Visibility.Visible)
+        {
+            // Past the trailing edge (pill or bubble), centred on the first row so they never cover activity content.
+            var trailing = (IslandLayout.BubbleRect(g) is { } b ? b.Right : pill.Right) + _shakeOffset;
+            var row = Math.Min(pill.Height, IslandLayout.Compact.Height);
+            Canvas.SetLeft(PrivacyDots, trailing + PrivacyDotGap);
+            Canvas.SetTop(PrivacyDots, pill.Top + ((row - PrivacyDots.Height) / 2));
         }
     }
 

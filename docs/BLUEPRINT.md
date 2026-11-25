@@ -964,6 +964,7 @@ await session.TryChangePlaybackPositionAsync(ticks); // seek
   - `HKCU\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\microphone` (and its `NonPackaged` subkey)
   - the same path under `...\ConsentStore\webcam`
 - An app is **currently using** the device when its subkey has `LastUsedTimeStart > 0` and `LastUsedTimeStop == 0`.
+- **Implementation note (Phase 4):** Windows 11 build 26300 was found not to update this store at all; the microphone is therefore also read from CoreAudio capture sessions (documented `IAudioSessionManager2`, state Active; event-driven, because a 1 s poll cost 0.15–0.2 % idle CPU). See ADR 0007 / KI-028.
 - **Display:** an orange dot for mic and a green dot for camera, at the trailing edge of the Island. The expanded view lists which apps.
 - **Ignore IrisAura Face's own camera use** during a scan, but **show it during enrollment**.
 - **Limitation:** some classic apps access hardware directly and are not recorded there. This is best-effort.
@@ -1283,6 +1284,11 @@ A solo developer should normally do 0A, then Island Phases 1–5, and fit 0B/0C 
 - Add notifications only after package identity, permission UX, privacy handling, and Windows build compatibility are proven.
 - Keep call detection explicitly labelled heuristic/beta. Do not infer a call from microphone use alone without corroborating evidence.
 - **Acceptance:** each provider can be independently disabled/restarted; missing API/device support degrades gracefully; notification content is not persisted by default.
+- **Implementation notes (2026-11-25, ADR 0007):**
+  - Microphone use also comes from CoreAudio capture sessions: on Windows 11 build 26300 the consent store (§8.6.7) was not updated for any app. Camera use stays consent-store only (best-effort).
+  - Privacy dots use `Aura.Violet` (mic) and `Aura.Cyan` (camera), just past the trailing edge; the app list is in the menu until Phase 4B.
+  - Providers report "unavailable" (no battery, no WMI brightness, no adapter) instead of failing; the Activities menu switches each one on/off (`island-settings.json`). Call detection is off by default.
+  - Notifications (§8.6.9) are deferred until the owner approves the sparse-package spike (dev certificate trust); hiding the Windows volume flyout is not planned.
 
 ### Phase 4B: IrisAura Island expanded panel redesign (owner request; 1–2 weeks)
 

@@ -22,18 +22,21 @@ public sealed class IslandController : IDisposable
     private const int MenuDebug = 5;
     private const int MenuQuit = 6;
     private const int MenuTimerBase = 100;
+    private const int MenuProviderBase = 200;
     private static readonly int[] TimerMinutes = [1, 5, 10, 25];
 
     private readonly IslandWindow _window;
     private readonly ActivityManager _manager;
     private readonly ActivityProviderHost _host;
     private readonly IslandStateStore _store;
+    private readonly IslandSettingsStore? _settingsStore;
     private readonly TimeProvider _time;
     private readonly DispatcherTimer _timer;
     private readonly Dictionary<string, IActivityViewModel> _views = new(StringComparer.Ordinal);
     private readonly Func<IslandActivity, IActivityViewModel?>? _viewFactory;
     private TrayIcon? _tray;
     private IslandState _state;
+    private IslandSettings _settings;
     private UserPreference? _preference;
     private ForegroundApp? _foreground;
 
@@ -42,20 +45,24 @@ public sealed class IslandController : IDisposable
     /// <param name="host">Provider host (actions are routed through it).</param>
     /// <param name="store">Persisted state.</param>
     /// <param name="viewFactory">Creates rich view models for data payloads (e.g. media); <see langword="null"/> result = generic view.</param>
+    /// <param name="settingsStore">Provider on/off settings (island-settings.json); <see langword="null"/> = not persisted.</param>
     public IslandController(
         IslandWindow window,
         ActivityManager manager,
         ActivityProviderHost host,
         IslandStateStore store,
-        Func<IslandActivity, IActivityViewModel?>? viewFactory = null)
+        Func<IslandActivity, IActivityViewModel?>? viewFactory = null,
+        IslandSettingsStore? settingsStore = null)
     {
         _window = window;
         _manager = manager;
         _host = host;
         _store = store;
+        _settingsStore = settingsStore;
         _viewFactory = viewFactory;
         _time = manager.Time;
         _state = store.Load();
+        _settings = settingsStore?.Load() ?? new IslandSettings();
 
         _timer = new DispatcherTimer(DispatcherPriority.Normal);
         _timer.Tick += (_, _) => Refresh();
@@ -76,7 +83,7 @@ public sealed class IslandController : IDisposable
     /// <summary>The user chose the debug panel (debug builds / --debug).</summary>
     public event EventHandler? DebugPanelRequested;
 
-    /// <summary>The user chose Start timer (handled by the timer provider; the debug timer until Phase 4).</summary>
+    /// <summary>The user chose Start timer (handled by the timer provider).</summary>
     public event EventHandler<TimeSpan>? StartTimerRequested;
 
     /// <summary>The layout changed (debug panel).</summary>
@@ -103,6 +110,14 @@ public sealed class IslandController : IDisposable
 
     /// <summary>Show the "Debug panel…" menu item.</summary>
     public bool DebugMenuEnabled { get; set; }
+
+    /// <summary>Provider that handles "Start timer"; the item is disabled while it is not running.</summary>
+    public string TimerProviderId { get; set; } = "timers";
+
+    /// <summary>Providers the user does not switch in the Activities menu (the debug provider).</summary>
+    public ISet<string> HiddenProviders { get; } = new HashSet<string>(StringComparer.Ordinal);
+
+    public IslandSettings Settings => _settings;
 
     public bool TrayIconVisible => _tray?.IsAdded == true;
 
@@ -152,6 +167,9 @@ public sealed class IslandController : IDisposable
         Layout = PriorityArbiter.Arrange(new ArbiterInput(
             _manager.Activities, now, QuietMode || ShellQuietTime, _preference, HideWhenSourceAppInFront ? _foreground : null));
         _window.SetPresentation(ToPresentation(Layout));
+        _window.SetPrivacyIndicators(
+            Layout.PrivacyIndicators.Any(a => a.Compact.LeadingGlyph == "Aura.Glyph.Mic"),
+            Layout.PrivacyIndicators.Any(a => a.Compact.LeadingGlyph == "Aura.Glyph.Camera"));
         LayoutChanged?.Invoke(this, Layout);
 
         var next = Min(Layout.NextChangeAt, _state.HiddenUntil);
@@ -344,14 +362,26 @@ public sealed class IslandController : IDisposable
     private void ShowMenu(nint owner, int x, int y, bool openUpwards)
     {
         var hidden = IsHiddenByUser;
-        var items = new List<MenuItemSpec>
+        var providers = _host.Providers;
+        var timersRunning = _host.Status(TimerProviderId)?.State == ProviderState.Running;
+        var items = new List<MenuItemSpec>();
+        var privacy = PrivacyMenuItems().ToList();
+        if (privacy.Count > 0)
         {
+            items.AddRange(privacy);
+            items.Add(MenuItemSpec.Separator);
+        }
+
+        items.AddRange(
+        [
             new(MenuQuiet, "Quiet mode (hide notification banners)", Checked: QuietMode),
             hidden ? new MenuItemSpec(MenuShow, "Show IrisAura Island") : new MenuItemSpec(MenuHide, "Hide for 1 hour"),
-            new(0, "Start timer", Children: TimerMinutes.Select(m => new MenuItemSpec(MenuTimerBase + m, $"{m} min")).ToList()),
+            new(0, "Start timer", Enabled: timersRunning,
+                Children: TimerMinutes.Select(m => new MenuItemSpec(MenuTimerBase + m, $"{m} min")).ToList()),
+            new(0, "Activities", Children: ProviderMenuItems(providers)),
             MenuItemSpec.Separator,
             new(MenuSettings, "Settings (coming in a later update)", Enabled: false),
-        };
+        ]);
         if (DebugMenuEnabled)
         {
             items.Add(new MenuItemSpec(MenuDebug, "Debug panel…"));
@@ -383,10 +413,56 @@ public sealed class IslandController : IDisposable
             case MenuQuit:
                 QuitRequested?.Invoke(this, EventArgs.Empty);
                 break;
-            case > MenuTimerBase:
+            case >= MenuProviderBase when command - MenuProviderBase < providers.Count:
+                var provider = providers[command - MenuProviderBase];
+                var retry = provider.IsEnabled && provider.State is ProviderState.Faulted or ProviderState.Unavailable;
+                SetProviderEnabled(provider.Id, retry || !provider.IsEnabled);
+                break;
+            case > MenuTimerBase and < MenuProviderBase:
                 StartTimerRequested?.Invoke(this, TimeSpan.FromMinutes(command - MenuTimerBase));
                 break;
         }
+    }
+
+    /// <summary>
+    /// Turns a provider on or off (Activities menu; BLUEPRINT §10 Phase 4 "each provider can be independently
+    /// disabled/restarted") and saves the choice. Turning on a provider that failed or was unavailable retries it.
+    /// </summary>
+    public void SetProviderEnabled(string providerId, bool enabled)
+    {
+        _host.SetEnabled(providerId, enabled);
+        _settings = _settings.WithProvider(providerId, enabled);
+        _settingsStore?.Save(_settings);
+        Log.Information("Island provider {Provider} switched {State}", providerId, enabled ? "on" : "off");
+    }
+
+    /// <summary>Menu lines listing the apps using the microphone/camera (BLUEPRINT §8.6.7 "lists which apps").</summary>
+    private IEnumerable<MenuItemSpec> PrivacyMenuItems() =>
+        Layout.PrivacyIndicators
+            .Where(a => a.Expanded is not null)
+            .Select(a => new MenuItemSpec(0, $"{a.Expanded!.Title}: {a.Expanded.Subtitle}", Enabled: false));
+
+    private List<MenuItemSpec> ProviderMenuItems(IReadOnlyList<ProviderStatus> providers)
+    {
+        var items = new List<MenuItemSpec>();
+        for (var i = 0; i < providers.Count; i++)
+        {
+            var p = providers[i];
+            if (HiddenProviders.Contains(p.Id))
+            {
+                continue;
+            }
+
+            var label = p.State switch
+            {
+                ProviderState.Unavailable when p.IsEnabled => $"{p.DisplayName} (not available on this device)",
+                ProviderState.Faulted when p.IsEnabled => $"{p.DisplayName} (stopped after an error; click to restart)",
+                _ => p.DisplayName,
+            };
+            items.Add(new MenuItemSpec(MenuProviderBase + i, label, Checked: p.IsEnabled));
+        }
+
+        return items;
     }
 
     private static DateTimeOffset? Min(DateTimeOffset? a, DateTimeOffset? b) =>

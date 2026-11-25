@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Windows.Threading;
 using IrisAura.Island.Engine;
+using IrisAura.Island.Providers.Privacy;
 
 namespace IrisAura.Island.Diagnostics;
 
@@ -31,6 +32,8 @@ public sealed class DebugActivityProvider : IActivityProvider
     public const string CallId = "debug:call";
     public const string DownloadId = "debug:download";
     public const string CustomId = "debug:custom";
+    public const string MicrophoneId = "debug:microphone";
+    public const string CameraId = "debug:camera";
 
     private readonly DispatcherTimer _ticker;
     private IActivitySink? _sink;
@@ -188,6 +191,26 @@ public sealed class DebugActivityProvider : IActivityProvider
         new ExpandedContent("Deploying API", "Stage 3 of 5", 0.37,
             [new ActivityButton("done", "Finish"), new ActivityButton("fail", "Simulate crash")]),
         Priority: priority, SourceAppId: "debug"));
+
+    /// <summary>Fake microphone / camera indicators (privacy dots).</summary>
+    public void PrivacyIndicator(bool microphone, bool camera)
+    {
+        var user = new CapabilityUser("debug", "Debug panel", null, null);
+        Toggle(MicrophoneId, microphone ? PrivacyProvider.Indicator(Capability.Microphone, [user]) : null);
+        Toggle(CameraId, camera ? PrivacyProvider.Indicator(Capability.Camera, [user]) : null);
+
+        void Toggle(string id, ActivitySpec? spec)
+        {
+            if (spec is null)
+            {
+                _sink?.End(id);
+            }
+            else
+            {
+                _sink?.Start(spec with { Id = id });
+            }
+        }
+    }
 
     /// <summary>Simulates an unrecoverable provider error.</summary>
     public void Fail() => _sink?.ReportFailure(new InvalidOperationException("Simulated provider failure (debug panel)"));

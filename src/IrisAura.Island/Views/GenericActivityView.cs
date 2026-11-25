@@ -31,6 +31,9 @@ public sealed class GenericActivityView : ObservableObject, IActivityViewModel
 
     public string? LeadingGlyph => _activity.Compact.LeadingGlyph;
 
+    /// <summary>Icon colour role (brand tokens only): Default, Success (Aura.Cyan) or Alert (Aura.Error).</summary>
+    public ActivityTone Tone => _activity.Compact.Tone;
+
     public string? LeadingText => _activity.Compact.LeadingText;
 
     public string? TrailingText => _activity.Compact.TrailingText;
