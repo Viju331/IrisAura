@@ -320,3 +320,74 @@ success/alert); 15 new original glyphs (no Bluetooth logo); `--system-probe` dia
 - Notifications and volume-flyout hiding not built (KI-026, KI-027).
 - Downloads show bytes, with no animated indeterminate bar (CPU budget).
 - Browser calls are not detected (would need window titles).
+
+---
+
+## Phase 4B — IrisAura Island expanded panel redesign
+
+**Branch:** `main` · **Date:** 2026-11-25 · **Status:** ✅ implemented and tested on DEV-01 (self-test with the real camera); drag-and-drop with real apps, real-media panel CPU and AirPods banner are owner checks.
+
+### Scope delivered (BLUEPRINT §8.13A, §8.6.12; ADR 0008)
+
+- **Dashboard panel** (640 × 224, floating pill shape kept) replaces the old expanded views. Opens by hovering the
+  Island in any state except a banner (including the idle pill), from the tray menu ("Open panel"), or by dragging
+  files onto the Island.
+- **Island tab:** the "now" card shows the main activity's expanded view — a new **media card** (large art with the
+  app badge, title / artist, live waveform, seek bar, controls), or the timer / call / download view; "Nothing
+  playing" when idle. A **calendar strip** (month, year, five days with today highlighted; dates only). A **camera
+  mirror** card (round, mirrored live preview; off until switched on).
+- **Tray tab:** the **file tray** (§8.6.12): drop files or folders on the Island to keep shortcuts; click to open; drag
+  out to any app; remove one or "Clear tray"; persisted in `island-shelf.json` (paths only, max 30).
+- **Bluetooth "connected"** banner in the new design: device glyph in a battery ring (faint full ring when the level is
+  unknown) with a scale-in.
+- **Window** grows to 740 × 290 only while the panel is open and shrinks back after it closes; the waveform runs at
+  15 Hz inside the panel.
+- Self-test additions: panel checks, `--snapshots dir` (renders of the Island's own visual), `--test-camera`.
+
+### Acceptance criteria (BLUEPRINT §10 Phase 4B)
+
+| Criterion | Status | Evidence |
+|---|---|---|
+| Tabs (Island / Tray), large media card, calendar strip, file tray, opt-in camera mirror, Bluetooth device activity in the new design | ✅ | `docs/evidence/phase-4b-snapshots/*.png` (panel-idle, panel-media, panel-tray, device-banner) |
+| §8.8 budgets still met (measured) | ✅ CPU/RAM · ⚠ frames as before | Idle 0.117 % (providers stopped) / 0.117 % (all providers); media + waveform 1.055 %; **panel open 0.82 %**; working set 116 MB. Transitions keep the known 1 dropped frame each (KI-011); startup 967 ms (KI-012) |
+| Focus / click-through / full-screen tests still pass | ✅ focus, click-through · inconclusive full screen (as before, KI-014) | No focus taken on panel open/close; click-through restored after closing; window placement checks pass at both sizes |
+| Camera mirror off by default; camera released when the panel closes | ✅ | Self-test: "off by default: no camera opened"; with `--test-camera`: live in 0.8 s, camera dot on, released on the Tray tab and on close, **exclusive camera access granted afterwards** |
+| No calendar or camera access without user consent | ✅ | Calendar: dates only, no API calls; camera only after the user's "Turn on" |
+
+### Measurements and fixes during the phase
+
+- First panel run: **4.4 %** CPU with the panel open on the media card. Two causes: the self-test's fake media
+  re-laid out its timeline text at 30 Hz (the real media view does it at 4 Hz), and a 30 Hz waveform copies the
+  whole, 1.8× larger, layered surface each frame. Fake aligned with the real view and the panel waveform set to 15 Hz:
+  **0.82 %**.
+- Closing the panel dropped **7** frames; caching the outgoing content as a bitmap while it fades: **1**.
+- Tab highlight did not show (bool vs string trigger) and two of three tray icons did not load (shell icon off a COM
+  thread); both fixed and visible in the snapshots.
+
+### Tests
+
+- **287 unit tests** (was 275): panel window fits with overshoot; pill keeps its screen position when the window
+  grows (100 % and 150 %); file tray order, duplicates, missing files, drive roots, limit, prune, persistence, corrupt
+  file; calendar strip centring, month end, accessible names, user language; panel visibility rules (now card only
+  while open on the Island tab, replaced while open, Tray tab hides it); mirror off by default and never opens the
+  camera while off; mirror setting persisted; device view battery ring.
+- Self-test (`docs/evidence/phase-4b-selftest-2026-11-25.json`, with `--test-camera`): 62 pass / 13 fail / 2 inconclusive.
+  All panel, camera, focus and CPU checks pass; fails are startup (967 ms) and one dropped frame per transition.
+
+### Owner checks
+
+1. Hover the idle pill: does opening the panel from idle feel right, or should idle stay click-through? (KI-015)
+2. Play music, hover the Island: the media card; use the controls and the seek bar; leave it open a minute (KI-036).
+3. Drag a file from Explorer, a browser download bar or Outlook onto the Island → Tray tab; drag it out into an email
+   or folder; click to open; remove; Clear tray. Restart the Island: the tray is kept (KI-037).
+4. Camera mirror: Turn on, close the panel (camera light goes off), reopen (it starts again); during a Teams video call
+   the mirror must not interrupt the call (KI-038). Turn off.
+5. Connect your AirPods: the new device banner with the battery ring if Windows reports a level.
+
+### Deviations (ADR 0008)
+
+- Hovering the idle pill opens the panel (the idle pill takes clicks only while the cursor is on it).
+- The panel replaces the old expanded views; the media card is the panel's now card.
+- Calendar shows dates only (events need KI-026's package identity and consent).
+- The panel's waveform runs at 15 Hz (CPU budget).
+- Microphone/camera app list still in the menu, not the panel (KI-034).

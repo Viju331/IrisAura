@@ -106,7 +106,8 @@ public sealed class AppVisualsResolver
         }
     }
 
-    private static unsafe ImageSource? ShellIcon(string path)
+    /// <summary>The shell icon of a file, folder or exe (frozen; any thread).</summary>
+    internal static unsafe ImageSource? ShellIcon(string path)
     {
         var info = default(SHFILEINFOW);
         if (SHGetFileInfo(path, 0, &info, (uint)sizeof(SHFILEINFOW), SHGFI_ICON | SHGFI_LARGEICON) == 0 || info.hIcon == 0)

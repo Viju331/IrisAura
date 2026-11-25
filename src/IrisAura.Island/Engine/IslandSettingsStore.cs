@@ -13,6 +13,9 @@ public sealed record IslandSettings
     /// <summary>Provider id → enabled. Providers not listed use their default.</summary>
     public Dictionary<string, bool> Providers { get; init; } = new(StringComparer.Ordinal);
 
+    /// <summary>Camera mirror in the panel (§8.13A): off until the user turns it on.</summary>
+    public bool CameraMirror { get; init; }
+
     public bool IsEnabled(string providerId, bool defaultValue) =>
         Providers.TryGetValue(providerId, out var enabled) ? enabled : defaultValue;
 

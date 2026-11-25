@@ -1,6 +1,7 @@
 using System.Windows.Threading;
 using IrisAura.Island.Shell;
 using IrisAura.Island.Views;
+using IrisAura.Island.Views.Panel;
 using Serilog;
 
 namespace IrisAura.Island.Engine;
@@ -21,6 +22,7 @@ public sealed class IslandController : IDisposable
     private const int MenuSettings = 4;
     private const int MenuDebug = 5;
     private const int MenuQuit = 6;
+    private const int MenuPanel = 7;
     private const int MenuTimerBase = 100;
     private const int MenuProviderBase = 200;
     private static readonly int[] TimerMinutes = [1, 5, 10, 25];
@@ -39,6 +41,7 @@ public sealed class IslandController : IDisposable
     private IslandSettings _settings;
     private UserPreference? _preference;
     private ForegroundApp? _foreground;
+    private DashboardView? _dashboard;
 
     /// <param name="window">The Island window.</param>
     /// <param name="manager">Activity engine.</param>
@@ -119,6 +122,38 @@ public sealed class IslandController : IDisposable
 
     public IslandSettings Settings => _settings;
 
+    /// <summary>
+    /// The dashboard panel (Phase 4B, §8.13A). Setting it makes hover open the panel, shows the main activity in its
+    /// now card, routes dropped files to the tray and persists the camera-mirror switch.
+    /// </summary>
+    public DashboardView? Dashboard
+    {
+        get => _dashboard;
+        set
+        {
+            if (_dashboard is not null || value is null)
+            {
+                throw new InvalidOperationException("The dashboard is set once.");
+            }
+
+            _dashboard = value;
+            _window.Dashboard = value;
+            value.Mirror.CameraActiveChanged += (_, _) => Refresh();
+            value.Mirror.EnabledChanged += (_, enabled) =>
+            {
+                _settings = _settings with { CameraMirror = enabled };
+                _settingsStore?.Save(_settings);
+                Log.Information("Camera mirror switched {State}", enabled ? "on" : "off");
+            };
+            _window.FileDragEntered += (_, _) => value.SelectedTab = PanelTab.Tray;
+            _window.FilesDropped += (_, paths) =>
+            {
+                value.Shelf.Add(paths);
+                value.SelectedTab = PanelTab.Tray;
+            };
+        }
+    }
+
     public bool TrayIconVisible => _tray?.IsAdded == true;
 
     /// <summary>Applies persisted state and shows the current layout. Call once the window exists.</summary>
@@ -166,10 +201,19 @@ public sealed class IslandController : IDisposable
         ShellQuietTime = Win32Shell.QueryNotificationState() == UserNotificationState.QuietTime;
         Layout = PriorityArbiter.Arrange(new ArbiterInput(
             _manager.Activities, now, QuietMode || ShellQuietTime, _preference, HideWhenSourceAppInFront ? _foreground : null));
-        _window.SetPresentation(ToPresentation(Layout));
+        var presentation = ToPresentation(Layout);
+        if (_dashboard is not null)
+        {
+            _dashboard.Now = Layout.Main is { } main ? ViewFor(main) : null;
+        }
+
+        _window.SetPresentation(presentation);
+
+        // The Island's own camera mirror counts as camera use (§8.13A: the privacy indicator is on while it shows).
         _window.SetPrivacyIndicators(
             Layout.PrivacyIndicators.Any(a => a.Compact.LeadingGlyph == "Aura.Glyph.Mic"),
-            Layout.PrivacyIndicators.Any(a => a.Compact.LeadingGlyph == "Aura.Glyph.Camera"));
+            Layout.PrivacyIndicators.Any(a => a.Compact.LeadingGlyph == "Aura.Glyph.Camera")
+                || _dashboard?.Mirror.IsCameraActive == true);
         LayoutChanged?.Invoke(this, Layout);
 
         var next = Min(Layout.NextChangeAt, _state.HiddenUntil);
@@ -375,6 +419,7 @@ public sealed class IslandController : IDisposable
         items.AddRange(
         [
             new(MenuQuiet, "Quiet mode (hide notification banners)", Checked: QuietMode),
+            new(MenuPanel, "Open panel", Enabled: _dashboard is not null && !hidden),
             hidden ? new MenuItemSpec(MenuShow, "Show IrisAura Island") : new MenuItemSpec(MenuHide, "Hide for 1 hour"),
             new(0, "Start timer", Enabled: timersRunning,
                 Children: TimerMinutes.Select(m => new MenuItemSpec(MenuTimerBase + m, $"{m} min")).ToList()),
@@ -406,6 +451,9 @@ public sealed class IslandController : IDisposable
                 break;
             case MenuShow:
                 ShowAgain();
+                break;
+            case MenuPanel:
+                _window.OpenPanel(); // stays open until clicked or the cursor has been over it and left
                 break;
             case MenuDebug:
                 DebugPanelRequested?.Invoke(this, EventArgs.Empty);

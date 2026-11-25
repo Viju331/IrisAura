@@ -78,14 +78,17 @@ public partial class IslandWindow : Window
     private nint _pendingMonitor;
     private TimeSpan _pendingMonitorSince;
     private string _announcement = string.Empty;
+    private double _windowWidth = IslandLayout.WindowWidth;
+    private double _windowHeight = IslandLayout.WindowHeight;
+    private bool _pinnedByDrag;
 
     public IslandWindow(IslandOptions options)
     {
         _options = options;
         InitializeComponent();
 
-        Width = IslandLayout.WindowWidth;
-        Height = IslandLayout.WindowHeight;
+        Width = _windowWidth;
+        Height = _windowHeight;
         _incoming = ContentA;
         _outgoing = ContentB;
         ContentA.RenderTransformOrigin = new Point(0.5, 0.5);
@@ -116,6 +119,13 @@ public partial class IslandWindow : Window
             BubbleClicked?.Invoke(this, EventArgs.Empty);
         };
         PreviewKeyDown += OnPreviewKeyDown;
+
+        // File tray (§8.6.12): files dragged onto the Island open the panel on its Tray tab.
+        PillContent.AllowDrop = true;
+        PillContent.DragEnter += OnFileDragOver;
+        PillContent.DragOver += OnFileDragOver;
+        PillContent.DragLeave += OnFileDragLeave;
+        PillContent.Drop += OnFileDrop;
         Deactivated += (_, _) => ExitFocusMode(restoreFocus: false);
         IsKeyboardFocusWithinChanged += (_, _) => UpdateBorder();
     }
@@ -140,6 +150,12 @@ public partial class IslandWindow : Window
 
     /// <summary>Right click on the pill or bubble, with the cursor position in screen pixels.</summary>
     public event EventHandler<(int X, int Y)>? ContextMenuRequested;
+
+    /// <summary>Files are being dragged over the Island (the panel opens; show the Tray tab).</summary>
+    public event EventHandler? FileDragEntered;
+
+    /// <summary>Files were dropped on the Island (paths).</summary>
+    public event EventHandler<IReadOnlyList<string>>? FilesDropped;
 
     /// <summary>The timer shortcut (Ctrl+Alt+Shift+T) was pressed.</summary>
     public event EventHandler? TimerHotkeyPressed;
@@ -172,6 +188,21 @@ public partial class IslandWindow : Window
     public bool IsPinned => _hover.IsPinned;
 
     public bool HotkeyRegistered { get; private set; }
+
+    /// <summary>
+    /// The dashboard panel (Phase 4B, §8.13A) shown when the Island expands. With a dashboard, hovering any state except
+    /// a banner (including the idle pill) opens it; without one, only activities with an expanded view expand.
+    /// </summary>
+    public IIslandActivityView? Dashboard { get; set; }
+
+    /// <summary>Whether the dashboard panel is showing.</summary>
+    public bool IsPanelOpen => VisualState == IslandVisualState.Expanded && Dashboard is not null;
+
+    /// <summary>Current window size in DIPs (larger only while the panel is open or animating).</summary>
+    public Size WindowSizeDip => new(_windowWidth, _windowHeight);
+
+    /// <summary>What hover or pin can open now.</summary>
+    private bool CanOpen => Dashboard is not null ? _presentation.State != IslandBaseState.Banner : _presentation.CanExpand;
 
     public bool TimerHotkeyRegistered { get; private set; }
 
@@ -316,7 +347,7 @@ public partial class IslandWindow : Window
     public void SetPresentation(IslandPresentation presentation)
     {
         _presentation = presentation;
-        if (!presentation.CanExpand)
+        if (!CanOpen)
         {
             _hover.Reset();
         }
@@ -353,13 +384,35 @@ public partial class IslandWindow : Window
     /// <summary>Pins the expanded view open, or unpins it (same as clicking the pill).</summary>
     public void TogglePin()
     {
-        var change = _hover.IsPinned ? _hover.Unpin(_clock.Elapsed) : _hover.Pin(_presentation.CanExpand);
+        var change = _hover.IsPinned ? _hover.Unpin(_clock.Elapsed) : _hover.Pin(CanOpen);
         if (change != HoverChange.None)
         {
             UpdateVisual();
         }
 
         StatusChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Opens the dashboard panel and keeps it open (tray menu, file drag, self-test).</summary>
+    public void OpenPanel()
+    {
+        if (!_hover.IsPinned)
+        {
+            _hover.Pin(CanOpen);
+        }
+
+        UpdateVisual();
+    }
+
+    /// <summary>Closes the panel (unpins; it stays open while the cursor is over it).</summary>
+    public void ClosePanel()
+    {
+        if (_hover.IsPinned)
+        {
+            _hover.Unpin(_clock.Elapsed);
+        }
+
+        UpdateVisual();
     }
 
     /// <summary>Re-reads options (debug panel / settings).</summary>
@@ -389,7 +442,7 @@ public partial class IslandWindow : Window
 
         var monitor = _options.Monitor == MonitorMode.FollowCursor ? MonitorUnderCursor() : Win32Shell.PrimaryMonitor();
         CurrentMonitor = monitor;
-        var target = PlacementCalculator.Compute(monitor, IslandLayout.WindowWidth, IslandLayout.WindowHeight);
+        var target = PlacementCalculator.Compute(monitor, _windowWidth, _windowHeight);
         if (Win32Shell.WindowRect(_hwnd) != target)
         {
             Win32Shell.MoveWindow(_hwnd, target);
@@ -478,9 +531,10 @@ public partial class IslandWindow : Window
             _pollTimer.Interval = interval;
         }
 
-        // The idle pill has no interaction, so it never blocks clicks to the window underneath.
-        var over = _presentation.State != IslandBaseState.Idle
-            && IslandLayout.IsOverInteractiveArea(_morph.Current, point);
+        // Without a dashboard the idle pill has no interaction, so it never blocks clicks to the window underneath.
+        // With the dashboard (Phase 4B) hovering the idle pill opens the panel, so it takes clicks while the cursor is on it.
+        var over = (_presentation.State != IslandBaseState.Idle || Dashboard is not null)
+            && IslandLayout.IsOverInteractiveArea(_morph.Current, point, _windowWidth);
 
         SetClickThrough(!(over || _focusMode));
         UpdateHover(over, now);
@@ -489,7 +543,7 @@ public partial class IslandWindow : Window
     private void UpdateHover(bool over, TimeSpan now)
     {
         var wasInside = _hover.IsInside;
-        var change = _hover.Update(over, now, _presentation.CanExpand);
+        var change = _hover.Update(over, now, CanOpen);
         if (wasInside != _hover.IsInside)
         {
             PointerOverChanged?.Invoke(this, _hover.IsInside);
@@ -552,31 +606,114 @@ public partial class IslandWindow : Window
         }
     }
 
+    // ---------------------------------------------------------------- window size, file drag and drop
+
+    /// <summary>
+    /// Resizes the window around the same top-centre point. Done once when the panel opens and once after it has
+    /// closed, never per frame. The pill stays put on screen because it is laid out centred in the window.
+    /// </summary>
+    private void SetWindowSize(double width, double height)
+    {
+        if (width == _windowWidth && height == _windowHeight)
+        {
+            return;
+        }
+
+        _windowWidth = width;
+        _windowHeight = height;
+        Reposition(); // moves and resizes the native window in one call
+        Width = width;
+        Height = height;
+        ApplyGeometry();
+    }
+
+    private static string[]? DraggedFiles(DragEventArgs e) =>
+        e.Data.GetDataPresent(DataFormats.FileDrop) ? e.Data.GetData(DataFormats.FileDrop) as string[] : null;
+
+    private void OnFileDragOver(object sender, DragEventArgs e)
+    {
+        e.Handled = true;
+        if (DraggedFiles(e) is not { Length: > 0 })
+        {
+            e.Effects = DragDropEffects.None;
+            return;
+        }
+
+        // A shortcut is kept, not a copy (§8.6.12): show the link cursor when the source allows it.
+        e.Effects = (e.AllowedEffects & DragDropEffects.Link) != 0 ? DragDropEffects.Link : DragDropEffects.Copy;
+        if (!_pinnedByDrag && !_hover.IsPinned)
+        {
+            _pinnedByDrag = true;
+            FileDragEntered?.Invoke(this, EventArgs.Empty);
+            OpenPanel();
+        }
+    }
+
+    private void OnFileDragLeave(object sender, DragEventArgs e)
+    {
+        e.Handled = true;
+
+        // DragLeave also fires when moving between child elements: check where the cursor really is.
+        Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
+        {
+            var (x, y) = Win32Shell.CursorPosition();
+            var point = PlacementCalculator.ScreenToWindowDip(Win32Shell.WindowRect(_hwnd), VisualTreeHelper.GetDpi(this).DpiScaleX, x, y);
+            if (_pinnedByDrag && !IslandLayout.IsOverInteractiveArea(_morph.Current, point, _windowWidth))
+            {
+                _pinnedByDrag = false;
+                ClosePanel();
+            }
+        }));
+    }
+
+    private void OnFileDrop(object sender, DragEventArgs e)
+    {
+        e.Handled = true;
+        if (DraggedFiles(e) is { Length: > 0 } files)
+        {
+            FilesDropped?.Invoke(this, files);
+        }
+
+        if (_pinnedByDrag)
+        {
+            _pinnedByDrag = false;
+            ClosePanel(); // stays open while the cursor is over it, then closes like a hover
+        }
+    }
+
     // ---------------------------------------------------------------- visual state
 
     private void UpdateVisual()
     {
         var p = _presentation;
-        var expanded = _hover.IsExpanded && p.CanExpand;
+        var expanded = _hover.IsExpanded && CanOpen;
 
         var state = p.State switch
         {
             IslandBaseState.Compact => expanded ? IslandVisualState.Expanded : IslandVisualState.Compact,
             IslandBaseState.Split => expanded ? IslandVisualState.Expanded : IslandVisualState.Split,
             IslandBaseState.Banner => IslandVisualState.Banner,
-            _ => IslandVisualState.Idle,
+            _ => expanded ? IslandVisualState.Expanded : IslandVisualState.Idle,
         };
 
         (IIslandActivityView? Activity, PresentationMode Mode) key = state switch
         {
             IslandVisualState.Idle => (null, PresentationMode.Compact),
-            IslandVisualState.Expanded => (p.Primary, PresentationMode.Expanded),
+            IslandVisualState.Expanded => (Dashboard ?? p.Primary, PresentationMode.Expanded),
             IslandVisualState.Banner => (p.Primary, PresentationMode.Banner),
             _ => (p.Primary, PresentationMode.Compact),
         };
 
         var bubble = state == IslandVisualState.Split ? p.Secondary : null;
-        var target = IslandLayout.For(state, p.Primary?.ExpandedKind ?? ExpandedKind.Media, p.Primary?.ExpandedHeight ?? 140);
+        var target = state == IslandVisualState.Expanded && Dashboard is not null
+            ? IslandLayout.Dashboard
+            : IslandLayout.For(state, p.Primary?.ExpandedKind ?? ExpandedKind.Media, p.Primary?.ExpandedHeight ?? 140);
+
+        // The window grows before the panel opens and shrinks after it has closed (OnRendering).
+        if (state == IslandVisualState.Expanded && Dashboard is not null)
+        {
+            SetWindowSize(IslandLayout.PanelWindowWidth, IslandLayout.PanelWindowHeight);
+        }
 
         var contentChanged = key != _pillContentKey;
         if (contentChanged)
@@ -618,6 +755,11 @@ public partial class IslandWindow : Window
         _incoming.Height = target.Height;
         _incoming.IsHitTestVisible = true;
         _outgoing.IsHitTestVisible = false;
+
+        // The outgoing content is static while it fades (its timers stop): cache it as a bitmap so each frame only
+        // composites it instead of re-rendering it (the panel is the largest content). Cleared when the animation ends.
+        _incoming.CacheMode = null;
+        _outgoing.CacheMode = _outgoing.Content is null ? null : new BitmapCache();
         Panel.SetZIndex(_incoming, 1);
         Panel.SetZIndex(_outgoing, 0);
 
@@ -733,6 +875,12 @@ public partial class IslandWindow : Window
             _renderingHooked = false;
             _outgoing.Content = null;
             _outgoing.ContentTemplate = null;
+            _outgoing.CacheMode = null;
+            if (VisualState != IslandVisualState.Expanded)
+            {
+                SetWindowSize(IslandLayout.WindowWidth, IslandLayout.WindowHeight);
+            }
+
             LastAnimation = _frames.Summarize();
             AnimationCompleted?.Invoke(this, LastAnimation);
             StatusChanged?.Invoke(this, EventArgs.Empty);
@@ -779,7 +927,7 @@ public partial class IslandWindow : Window
     private void ApplyGeometry()
     {
         var g = _morph.Current;
-        var pill = IslandLayout.PillRect(g);
+        var pill = IslandLayout.PillRect(g, _windowWidth);
         var radius = Math.Min(g.CornerRadius, Math.Min(pill.Width, pill.Height) / 2);
         var left = pill.Left + _shakeOffset;
 
@@ -816,7 +964,7 @@ public partial class IslandWindow : Window
         outScale.ScaleX = outScale.ScaleY = 1;
         outShift.Y = 0;
 
-        if (IslandLayout.BubbleRect(g) is { } bubble)
+        if (IslandLayout.BubbleRect(g, _windowWidth) is { } bubble)
         {
             Bubble.Visibility = Visibility.Visible;
             BubbleShadow.Visibility = Visibility.Visible;
@@ -841,7 +989,7 @@ public partial class IslandWindow : Window
         if (PrivacyDots.Visibility == Visibility.Visible)
         {
             // Past the trailing edge (pill or bubble), centred on the first row so they never cover activity content.
-            var trailing = (IslandLayout.BubbleRect(g) is { } b ? b.Right : pill.Right) + _shakeOffset;
+            var trailing = (IslandLayout.BubbleRect(g, _windowWidth) is { } b ? b.Right : pill.Right) + _shakeOffset;
             var row = Math.Min(pill.Height, IslandLayout.Compact.Height);
             Canvas.SetLeft(PrivacyDots, trailing + PrivacyDotGap);
             Canvas.SetTop(PrivacyDots, pill.Top + ((row - PrivacyDots.Height) / 2));
@@ -877,7 +1025,7 @@ public partial class IslandWindow : Window
         Pill.Focus();
         Keyboard.Focus(Pill);
 
-        if (_hover.Pin(_presentation.CanExpand) != HoverChange.None)
+        if (_hover.Pin(CanOpen) != HoverChange.None)
         {
             UpdateVisual();
         }

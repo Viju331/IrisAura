@@ -77,6 +77,20 @@ named reviewer, a date and linked evidence. Independent review means someone oth
 - [x] New package System.Management 10.0.15 (approved in BLUEPRINT §4, MIT), pinned; THIRD_PARTY_NOTICES and
       DEPENDENCIES updated.
 
+### Phase 4B (dashboard panel) — self-review, 2026-11-25
+
+- [x] Camera: off by default; switched on only by the user in the panel; `SharedReadOnly`; runs only while the panel's
+      Island tab shows; `MediaCapture` disposed on close/tab change (self-test: exclusive open succeeds afterwards);
+      frames never stored, logged or sent; last frame cleared; camera dot on while it runs. Camera code lives in
+      IrisAura.Island (not the credential provider, not Face).
+- [x] Snapshots (`--snapshots`) render the Island's own visual only; the mirror is never written to disk.
+- [x] File tray: paths only, never logged; items are opened only after the user's click (shell default app);
+      drag-out uses standard OLE file drag; no elevation, no copies.
+- [x] Calendar: no access (dates only).
+- [x] Focus: panel open/close and tab changes took no focus (self-test); the panel's buttons work without activation
+      (`WS_EX_NOACTIVATE` kept).
+- [x] No new packages. Only documented APIs (`Windows.Media.Capture`, `SHGetFileInfo`, WPF drag and drop).
+
 ## Findings
 
 | ID | Date | Component | Finding | Severity | Status |

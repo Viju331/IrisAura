@@ -9,7 +9,7 @@ namespace IrisAura.Island.Diagnostics;
 // engine (Phase 2) and real providers (Phases 3–5).
 
 /// <summary>Fake "now playing" media with an animated waveform.</summary>
-public sealed class FakeMediaActivity : ObservableObject, IIslandActivityView
+public sealed class FakeMediaActivity : ObservableObject, IIslandActivityView, IPanelAwareView
 {
     private static readonly TimeSpan Duration = TimeSpan.FromSeconds(223);
     private readonly DispatcherTimer _timer;
@@ -19,6 +19,7 @@ public sealed class FakeMediaActivity : ObservableObject, IIslandActivityView
     private bool _isPlaying = true;
     private bool _visible;
     private double _time;
+    private double _sinceTimeline;
 
     public FakeMediaActivity(string title = "Midnight Signals", string artist = "The Aura Ensemble", string app = "Media player")
     {
@@ -27,7 +28,7 @@ public sealed class FakeMediaActivity : ObservableObject, IIslandActivityView
         AppName = app;
         // Note: the (interval, priority, handler, dispatcher) constructor starts the timer at once; this one does not.
         _timer = new DispatcherTimer(DispatcherPriority.Render) { Interval = TimeSpan.FromMilliseconds(1000.0 / 30) };
-        _timer.Tick += (_, _) => Advance(1.0 / 30);
+        _timer.Tick += (_, _) => Advance(_timer.Interval.TotalSeconds);
         PlayPauseCommand = new RelayCommand(TogglePlayPause);
         RestartCommand = new RelayCommand(() =>
         {
@@ -84,6 +85,9 @@ public sealed class FakeMediaActivity : ObservableObject, IIslandActivityView
 
     public void TogglePlayPause() => IsPlaying = !IsPlaying;
 
+    /// <summary>Like the real media view: 15 Hz waveform inside the panel.</summary>
+    public void SetInPanel(bool inPanel) => _timer.Interval = TimeSpan.FromMilliseconds(1000.0 / (inPanel ? 15 : 30));
+
     public void SetVisible(bool visible)
     {
         _visible = visible;
@@ -119,9 +123,16 @@ public sealed class FakeMediaActivity : ObservableObject, IIslandActivityView
         }
 
         Bars = bars;
-        OnPropertyChanged(nameof(Progress));
-        OnPropertyChanged(nameof(ElapsedText));
-        OnPropertyChanged(nameof(RemainingText));
+
+        // Timeline text and bar at 4 Hz, like the real media view (re-laying out text at 30 Hz is not representative).
+        _sinceTimeline += dt;
+        if (_sinceTimeline >= 0.25 || dt == 0)
+        {
+            _sinceTimeline = 0;
+            OnPropertyChanged(nameof(Progress));
+            OnPropertyChanged(nameof(ElapsedText));
+            OnPropertyChanged(nameof(RemainingText));
+        }
     }
 
     private static string Format(TimeSpan t) => $"{(int)t.TotalMinutes}:{t.Seconds:00}";

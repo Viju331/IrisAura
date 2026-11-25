@@ -44,4 +44,6 @@ numbers, user names or any biometric data.
 | 2026-11-25 | DEV-01 | 26300 | same | Bluetooth battery property on paired devices (PnP, `{104EA319…} 2`) | Present: 30 % and 90 % | Live connect announcement: owner check (KI-029) |
 | 2026-11-25 | DEV-01 | 26300 | same | Idle CPU with all system providers running (3 × 20 s, from outside, two runs) | 0.04–0.18 % | Machine load 15–18 %; privacy provider off: 0.08–0.22 % (no measurable cost) |
 | 2026-11-25 | DEV-01 | 26300 | same | Phase 4 self-test | 44 pass / 11 fail / 2 inconclusive | Idle CPU with all providers 0.156 %; fails: startup 807 ms, 1–2 dropped frames per transition (KI-011/012). `docs/evidence/phase-4-selftest-2026-11-25.json` |
+| 2026-11-25 | DEV-01 | 26300 | same | Phase 4B self-test with `--test-camera` | 62 pass / 13 fail / 2 inconclusive | Panel opens from idle, window 740×290 centred, shrinks back; camera off by default; mirror live in 0.8 s, released (exclusive open afterwards); panel-open CPU 0.82 %; fails: startup 967 ms, 1 dropped frame per transition (KI-011/012). `docs/evidence/phase-4b-selftest-2026-11-25.json` |
+| 2026-11-25 | DEV-01 | 26300 | same | Built-in camera (camera mirror, SharedReadOnly) | Pass | Frames at ≤ 15 fps 320×240; nothing stored |
 | | | | 2+ monitors, mixed DPI | Placement, display change, follow cursor | ⏳ | Owner hardware needed (KI-013) |

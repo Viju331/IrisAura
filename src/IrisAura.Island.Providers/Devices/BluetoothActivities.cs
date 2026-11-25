@@ -12,6 +12,12 @@ public enum DeviceCategory
     Phone,
 }
 
+/// <summary>View payload of the "connected" banner (Phase 4B device design): the Island draws the device glyph and a battery ring.</summary>
+/// <param name="Name">Device name (shown, never logged).</param>
+/// <param name="Category">Device kind.</param>
+/// <param name="BatteryPercent">Battery level, or <see langword="null"/> when Windows does not report it.</param>
+public sealed record BluetoothDeviceInfo(string Name, DeviceCategory Category, int? BatteryPercent);
+
 /// <summary>Bluetooth "connected" activity and device classification (BLUEPRINT §8.6.6). Pure, for tests.</summary>
 public static class BluetoothActivities
 {
@@ -88,7 +94,8 @@ public static class BluetoothActivities
                 TrailingText: battery is { } t ? $"{t}%" : "Connected",
                 Tone: ActivityTone.Success),
             new ExpandedContent(name, subtitle),
-            AccessibleText: battery is { } a ? $"{name} connected, battery {a} percent" : $"{name} connected");
+            AccessibleText: battery is { } a ? $"{name} connected, battery {a} percent" : $"{name} connected",
+            View: new BluetoothDeviceInfo(name, category, battery));
     }
 }
 

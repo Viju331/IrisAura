@@ -15,7 +15,7 @@ public enum IslandVisualState
 /// <summary>Which expanded layout an activity uses.</summary>
 public enum ExpandedKind
 {
-    /// <summary>400 × 180, radius 36 (media).</summary>
+    /// <summary>400 × 180, radius 36 (media). Since Phase 4B the hover view is the dashboard panel instead.</summary>
     Media,
 
     /// <summary>400 × 120–200, radius 32.</summary>
@@ -51,6 +51,16 @@ public static class IslandLayout
     /// <summary>Top inset + largest pill height (generic expanded, 200) + overshoot + shadow margin.</summary>
     public const double WindowHeight = 250;
 
+    /// <summary>
+    /// Window size while the dashboard panel (Phase 4B, §8.13A) is open or animating: panel width 640 plus overshoot and
+    /// shadow margin. The window grows only for the panel, because every redraw of a layered window copies the whole
+    /// surface (ADR 0004/0006): the compact pill and its waveform keep the smaller window.
+    /// </summary>
+    public const double PanelWindowWidth = 740;
+
+    /// <summary>Top inset + panel height (224) + overshoot + shadow margin.</summary>
+    public const double PanelWindowHeight = 290;
+
     /// <summary>Gap between the top of the work area and the pill.</summary>
     public const double TopInset = 6;
 
@@ -68,6 +78,9 @@ public static class IslandLayout
     public static PillGeometry Banner { get; } = new(380, 72, 28);
     public static PillGeometry ExpandedMedia { get; } = new(400, 180, 36);
 
+    /// <summary>Dashboard panel (§8.13A): tabs, now card, calendar strip, camera mirror / file tray.</summary>
+    public static PillGeometry Dashboard { get; } = new(640, 224, 36);
+
     public static PillGeometry ExpandedGeneric(double height) =>
         new(400, Math.Clamp(height, GenericExpandedMin, GenericExpandedMax), 32);
 
@@ -83,21 +96,21 @@ public static class IslandLayout
         };
 
     /// <summary>Pill rectangle in window DIPs: horizontally centred (with the bubble) at the top inset.</summary>
-    public static Rect PillRect(PillGeometry g)
+    public static Rect PillRect(PillGeometry g, double windowWidth = WindowWidth)
     {
-        var left = (WindowWidth - g.TotalWidth) / 2;
+        var left = (windowWidth - g.TotalWidth) / 2;
         return new Rect(left, TopInset, Math.Max(0, g.Width), Math.Max(0, g.Height));
     }
 
     /// <summary>Bubble rectangle in window DIPs, or <see langword="null"/> without a bubble.</summary>
-    public static Rect? BubbleRect(PillGeometry g)
+    public static Rect? BubbleRect(PillGeometry g, double windowWidth = WindowWidth)
     {
         if (!g.HasBubble)
         {
             return null;
         }
 
-        var pill = PillRect(g);
+        var pill = PillRect(g, windowWidth);
         var top = TopInset + ((g.Height - g.BubbleSize) / 2);
         return new Rect(pill.Right + g.BubbleGap, top, g.BubbleSize, g.BubbleSize);
     }
@@ -106,15 +119,15 @@ public static class IslandLayout
     /// Whether a point (window DIPs) is over the interactive Island: the pill (extended upwards by
     /// the hot zone to the window's top edge) or the bubble.
     /// </summary>
-    public static bool IsOverInteractiveArea(PillGeometry g, Point p)
+    public static bool IsOverInteractiveArea(PillGeometry g, Point p, double windowWidth = WindowWidth)
     {
-        var pill = PillRect(g);
+        var pill = PillRect(g, windowWidth);
         var pillWithHotZone = new Rect(pill.Left, 0, pill.Width, pill.Bottom);
         if (pillWithHotZone.Contains(p))
         {
             return true;
         }
 
-        return BubbleRect(g) is { } bubble && bubble.Contains(p);
+        return BubbleRect(g, windowWidth) is { } bubble && bubble.Contains(p);
     }
 }

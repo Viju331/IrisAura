@@ -21,9 +21,10 @@ public sealed record MediaSwitcherItem(string Name, RelayCommand Select);
 /// Timers run only while the activity is visible: 30 Hz waveform while playing (and until the bars settle
 /// after pausing), 4 Hz progress while playing.
 /// </summary>
-public sealed class MediaActivityView : ObservableObject, IActivityViewModel
+public sealed class MediaActivityView : ObservableObject, IActivityViewModel, IPanelAwareView
 {
     private static readonly TimeSpan LevelInterval = TimeSpan.FromMilliseconds(1000.0 / 30);
+    private static readonly TimeSpan PanelLevelInterval = TimeSpan.FromMilliseconds(1000.0 / 15);
     private static readonly TimeSpan TimelineInterval = TimeSpan.FromMilliseconds(250);
 
     private readonly IAudioLevelSource _levels;
@@ -145,6 +146,9 @@ public sealed class MediaActivityView : ObservableObject, IActivityViewModel
     public ExpandedKind? ExpandedKind => Shell.ExpandedKind.Media;
 
     public double ExpandedHeight => 180;
+
+    /// <summary>Inside the panel the waveform updates at 15 Hz (smoothing is time-based, so it looks the same, only coarser).</summary>
+    public void SetInPanel(bool inPanel) => _levelTimer.Interval = inPanel ? PanelLevelInterval : LevelInterval;
 
     public void SetVisible(bool visible)
     {

@@ -34,6 +34,7 @@ public sealed class DebugActivityProvider : IActivityProvider
     public const string CustomId = "debug:custom";
     public const string MicrophoneId = "debug:microphone";
     public const string CameraId = "debug:camera";
+    public const string BluetoothId = "debug:bluetooth";
 
     private readonly DispatcherTimer _ticker;
     private IActivitySink? _sink;
@@ -191,6 +192,11 @@ public sealed class DebugActivityProvider : IActivityProvider
         new ExpandedContent("Deploying API", "Stage 3 of 5", 0.37,
             [new ActivityButton("done", "Finish"), new ActivityButton("fail", "Simulate crash")]),
         Priority: priority, SourceAppId: "debug"));
+
+    /// <summary>Fake "device connected" banner (Phase 4B device design).</summary>
+    public void Bluetooth(ActivitySpec spec) => _sink?.Start(spec with { Id = BluetoothId });
+
+    public void EndBluetooth() => _sink?.End(BluetoothId);
 
     /// <summary>Fake microphone / camera indicators (privacy dots).</summary>
     public void PrivacyIndicator(bool microphone, bool camera)

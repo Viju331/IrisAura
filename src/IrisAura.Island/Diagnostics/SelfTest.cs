@@ -7,7 +7,10 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using IrisAura.Island.Engine;
+using IrisAura.Island.Providers.Devices;
+using IrisAura.Island.Views.Panel;
 using IrisAura.Island.Providers.Media;
 using IrisAura.Island.Shell;
 using ActivityKind = IrisAura.Island.Activities.ActivityKind;
@@ -44,6 +47,12 @@ internal sealed class SelfTest(
     private nint _baselineForeground;
 
     public sealed record CheckResult(string Name, string Outcome, string Detail);
+
+    /// <summary>Folder for rendered snapshots of the panel (the Island's own pixels only, never the screen).</summary>
+    public string? SnapshotDirectory { get; init; }
+
+    /// <summary>Also test the camera mirror with the real camera (<c>--test-camera</c>; the camera light comes on for a few seconds).</summary>
+    public bool TestCamera { get; init; }
 
     public async Task<int> RunAsync()
     {
@@ -203,6 +212,9 @@ internal sealed class SelfTest(
         Add("indicator ended: dot removed", !island.MicrophoneDotVisible && !island.CameraDotVisible,
             $"mic dot {island.MicrophoneDotVisible}, camera dot {island.CameraDotVisible}");
 
+        // ---- dashboard panel (Phase 4B)
+        await PanelAsync(monitor);
+
         // ---- full screen
         await FullscreenAsync(monitor);
 
@@ -300,6 +312,163 @@ internal sealed class SelfTest(
             foregroundAfter == foregroundBefore && foregroundAfter != island.Handle && (style & WS_EX_NOACTIVATE) != 0,
             $"foreground unchanged {foregroundAfter == foregroundBefore}");
         Add($"no dropped frames (60 fps): {name}", summary.Frames > 0 && summary.Dropped == 0, summary.ToString());
+    }
+
+    /// <summary>
+    /// Dashboard panel (Phase 4B, §8.13A): opens from idle, the window grows around the same centre and shrinks back,
+    /// the now card follows the main activity, the tray works, the camera mirror is off by default (no camera opened),
+    /// focus is never taken and click-through returns after closing. With <see cref="TestCamera"/> it also turns the
+    /// mirror on, waits for frames and checks the camera is released (another app can open it exclusively).
+    /// </summary>
+    private async Task PanelAsync(MonitorDescriptor monitor)
+    {
+        if (controller.Dashboard is not { } dashboard)
+        {
+            Add("dashboard panel present", false, "no dashboard");
+            return;
+        }
+
+        driver.Show(FakeScenario.Idle);
+        await SettleAsync();
+        await TransitionAsync("idle→panel (open)", island.OpenPanel);
+        var panelRect = PlacementCalculator.Compute(monitor, IslandLayout.PanelWindowWidth, IslandLayout.PanelWindowHeight);
+        var actual = Win32Shell.WindowRect(island.Handle);
+        Add("panel opens from the idle pill", island.IsPanelOpen && island.CurrentGeometry == IslandLayout.Dashboard,
+            $"open {island.IsPanelOpen}, geometry {island.CurrentGeometry.Width:0}×{island.CurrentGeometry.Height:0}");
+        Add("window grows for the panel, centred at the top of the work area", actual == panelRect,
+            $"expected {panelRect}, actual {actual}");
+        Add("camera mirror off by default: no camera opened",
+            !dashboard.Mirror.IsEnabled && !dashboard.Mirror.IsCameraActive && dashboard.Mirror.State == MirrorState.Off,
+            $"enabled {dashboard.Mirror.IsEnabled}, camera open {dashboard.Mirror.IsCameraActive}, state {dashboard.Mirror.State}");
+        Add("no calendar access: dates only", dashboard.Calendar.Days.Count == CalendarStrip.DaysBefore + CalendarStrip.DaysAfter + 1
+            && dashboard.Calendar.Days.Count(d => d.IsToday) == 1, $"{dashboard.Calendar.Days.Count} days, today highlighted");
+        Snapshot("panel-idle");
+
+        driver.Show(FakeScenario.Media);
+        await SettleAsync();
+        Add("now card shows the main activity", ReferenceEquals(dashboard.Now, driver.Media) && island.IsPanelOpen,
+            $"now {dashboard.Now?.GetType().Name ?? "none"}");
+        Snapshot("panel-media");
+        var panelCpu = await MeasureCpuMedianAsync(TimeSpan.FromSeconds(2), samples: 3);
+        _metrics["panelOpenMediaCpu"] = panelCpu;
+        Add($"CPU with the panel open (media card + waveform) < {MediaCpuTargetPercent}%", panelCpu.MedianPercent < MediaCpuTargetPercent,
+            panelCpu + " (fake 30 Hz waveform; larger window)");
+
+        var temp = Directory.CreateTempSubdirectory("irisaura-selftest-tray-").FullName;
+        try
+        {
+            var files = new[] { "notes.txt", "photo.png", "slides.pptx" }.Select(n => Path.Combine(temp, n)).ToList();
+            files.ForEach(f => File.WriteAllText(f, "IrisAura self-test"));
+            dashboard.Shelf.Add(files.Append(Path.Combine(temp, "missing.txt")));
+            dashboard.SelectedTab = PanelTab.Tray;
+            await Task.Delay(400); // shell icons load off the UI thread
+            Add("tray keeps dropped files (missing ones ignored)", dashboard.Shelf.Items.Count == 3 && dashboard.IsTrayTab,
+                $"{dashboard.Shelf.Items.Count} items");
+            Snapshot("panel-tray");
+            dashboard.Shelf.Clear();
+            dashboard.SelectedTab = PanelTab.Island;
+            Add("tray clears", !dashboard.Shelf.HasItems, $"{dashboard.Shelf.Items.Count} items");
+        }
+        finally
+        {
+            Directory.Delete(temp, recursive: true);
+        }
+
+        if (TestCamera)
+        {
+            await CameraMirrorAsync(dashboard);
+        }
+        else
+        {
+            Info("camera mirror with the real camera", "not run (use --test-camera)");
+        }
+
+        await TransitionAsync("panel→compact (close)", island.ClosePanel);
+        await Task.Delay(100);
+        var compactRect = PlacementCalculator.Compute(monitor, IslandLayout.WindowWidth, IslandLayout.WindowHeight);
+        actual = Win32Shell.WindowRect(island.Handle);
+        Add("window shrinks back after the panel closes", !island.IsPanelOpen && actual == compactRect,
+            $"expected {compactRect}, actual {actual}");
+        Add("camera released when the panel closes", !dashboard.Mirror.IsCameraActive, $"camera open {dashboard.Mirror.IsCameraActive}");
+        var style = island.ExtendedStyle;
+        Add("click-through restored after the panel closes", (style & WS_EX_TRANSPARENT) != 0 || island.IsPointerOver,
+            $"exstyle 0x{style:X}, pointer over {island.IsPointerOver}");
+
+        // Device banner in the new design.
+        driver.Bluetooth(BluetoothActivities.Connected("Desk Headset", DeviceCategory.Audio, 80));
+        await SettleAsync();
+        Add("device banner uses the device view", controller.Layout.Transient?.View is BluetoothDeviceInfo,
+            $"transient {controller.Layout.Transient?.Id}");
+        Snapshot("device-banner");
+        driver.Show(FakeScenario.Idle);
+        driver.EndBluetooth();
+        await SettleAsync();
+    }
+
+    private async Task CameraMirrorAsync(DashboardView dashboard)
+    {
+        Info("camera mirror before switching on", $"state {dashboard.Mirror.State}, camera open {dashboard.Mirror.IsCameraActive}, frames {dashboard.Mirror.FramesShown}, panel open {island.IsPanelOpen}, tab {dashboard.SelectedTab}");
+        dashboard.Mirror.SetEnabled(true);
+        var watch = Stopwatch.StartNew();
+        while (!(dashboard.Mirror.IsLive && dashboard.Mirror.FramesShown >= 3)
+            && dashboard.Mirror.State != MirrorState.Unavailable && watch.Elapsed < TimeSpan.FromSeconds(10))
+        {
+            await Task.Delay(100);
+        }
+
+        Add("camera mirror shows live frames when switched on", dashboard.Mirror.IsLive && dashboard.Mirror.FramesShown >= 3,
+            $"{dashboard.Mirror.FramesShown} frames, live after {watch.ElapsedMilliseconds} ms, state {dashboard.Mirror.State} ({dashboard.Mirror.Message})");
+        Add("camera dot shows while the mirror runs", island.CameraDotVisible, $"camera dot {island.CameraDotVisible}");
+        Snapshot("panel-mirror", blurMirror: true);
+
+        dashboard.SelectedTab = PanelTab.Tray;
+        await Task.Delay(500);
+        Add("camera released when the mirror is not showing (Tray tab)", !dashboard.Mirror.IsCameraActive,
+            $"camera open {dashboard.Mirror.IsCameraActive}");
+        dashboard.SelectedTab = PanelTab.Island;
+        await Task.Delay(300);
+        dashboard.Mirror.SetEnabled(false);
+        await Task.Delay(500);
+
+        // Released for real: another client can take exclusive control of the camera.
+        try
+        {
+            using var exclusive = new Windows.Media.Capture.MediaCapture();
+            await exclusive.InitializeAsync(new Windows.Media.Capture.MediaCaptureInitializationSettings
+            {
+                SharingMode = Windows.Media.Capture.MediaCaptureSharingMode.ExclusiveControl,
+                StreamingCaptureMode = Windows.Media.Capture.StreamingCaptureMode.Video,
+            });
+            Add("camera can be opened exclusively after the mirror stops (released)", true, "exclusive control granted");
+        }
+        catch (Exception ex)
+        {
+            Inconclusive("camera can be opened exclusively after the mirror stops (released)",
+                $"{ex.GetType().Name}: another app may be using the camera");
+        }
+    }
+
+    /// <summary>Renders the Island window's own visual to a PNG (no screen capture). The mirror circle is not saved.</summary>
+    private void Snapshot(string name, bool blurMirror = false)
+    {
+        if (SnapshotDirectory is null || blurMirror)
+        {
+            return; // camera frames are never written to disk
+        }
+
+        Directory.CreateDirectory(SnapshotDirectory);
+        var scale = VisualTreeHelper.GetDpi(island).DpiScaleX;
+        var size = island.WindowSizeDip;
+        var bitmap = new RenderTargetBitmap((int)(size.Width * scale), (int)(size.Height * scale), 96 * scale, 96 * scale, PixelFormats.Pbgra32);
+        if (island.Content is Visual root)
+        {
+            bitmap.Render(root);
+        }
+
+        var encoder = new PngBitmapEncoder();
+        encoder.Frames.Add(BitmapFrame.Create(bitmap));
+        using var stream = File.Create(Path.Combine(SnapshotDirectory, name + ".png"));
+        encoder.Save(stream);
     }
 
     private async Task ClickThroughProbesAsync(nint handle)

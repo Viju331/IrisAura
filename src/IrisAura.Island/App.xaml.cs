@@ -16,6 +16,7 @@ using IrisAura.Island.Providers.Privacy;
 using IrisAura.Island.Providers.Timers;
 using IrisAura.Island.Shell;
 using IrisAura.Island.Views;
+using IrisAura.Island.Views.Panel;
 using Serilog;
 
 namespace IrisAura.Island;
@@ -180,11 +181,17 @@ public partial class App : Application
             {
                 MediaActivityState => new MediaActivityView(activity, levels, visuals, (id, action) => _controller?.InvokeAction(id, action), id => _controller?.OpenApp(id)),
                 TimerState => new TimerActivityView(activity, (id, action) => _controller?.InvokeAction(id, action)),
+                BluetoothDeviceInfo => new DeviceActivityView(activity),
                 _ => null,
             },
             settingsStore)
         { DebugMenuEnabled = debug, TimerProviderId = TimerProvider.ProviderId };
         _controller.HiddenProviders.Add(DebugActivityProvider.ProviderId);
+
+        // Dashboard panel (Phase 4B): file tray persisted next to the other state; camera mirror off unless switched on.
+        _controller.Dashboard = new DashboardView(
+            new FileShelfView(new FileShelfStore(StatePath(FileShelfStore.DefaultPath, "shelf"))),
+            new CameraMirrorView(enabled: settings.CameraMirror && selfTestPath is null));
         _controller.QuitRequested += (_, _) => Shutdown(0);
         _controller.DebugPanelRequested += (_, _) => ShowDebugPanel();
         var timers = _timers;
@@ -213,7 +220,12 @@ public partial class App : Application
             {
                 Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(async () =>
                 {
-                    var test = new SelfTest(_island, _controller, _debugProvider, _host, _options, selfTestPath, startupMs);
+                    var snapshotIndex = Array.FindIndex(args, a => a.Equals("--snapshots", StringComparison.OrdinalIgnoreCase));
+                    var test = new SelfTest(_island, _controller, _debugProvider, _host, _options, selfTestPath, startupMs)
+                    {
+                        SnapshotDirectory = snapshotIndex >= 0 && snapshotIndex + 1 < args.Length ? args[snapshotIndex + 1] : null,
+                        TestCamera = args.Contains("--test-camera", StringComparer.OrdinalIgnoreCase),
+                    };
                     var exitCode = perfOnly ? await test.RunPerfAsync() : await test.RunAsync();
                     Shutdown(exitCode);
                 }));

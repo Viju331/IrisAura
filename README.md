@@ -16,13 +16,15 @@ IrisAura is a Windows desktop product with two parts:
 
 ## Project status
 
-**Phase 4 — system providers.** On top of real media (Phase 3) and the activity engine (Phase 2), the
-Island now shows volume and brightness HUDs, charging and low-battery banners, Bluetooth devices connecting
-(with battery when Windows reports it), microphone/camera-in-use dots, its own timers (menu or
-**Ctrl+Alt+Shift+T**; they survive restarts) and downloads in progress. Call detection is a beta, off by
-default. Each of these can be switched off under **Activities** in the right-click or tray menu. Notifications
-and the SDK come later (Phase 5). Progress and test evidence are in [docs/PROGRESS.md](docs/PROGRESS.md); the
-full plan is in [docs/BLUEPRINT.md](docs/BLUEPRINT.md).
+**Phase 4B — dashboard panel.** Hover the Island (even when idle) to open a panel with two tabs:
+**Island** shows what's happening now (a large media card with album art and controls, or your timer, call or
+download), a calendar strip and an optional camera mirror (off until you turn it on; the camera runs only while the
+panel is open and nothing is recorded). **Tray** keeps shortcuts to files you drop on the Island, so you can drag
+them out to any app later. Below that sit the system providers from Phase 4: volume and brightness HUDs, charging
+and low battery, Bluetooth devices (with battery when Windows reports it), microphone/camera dots, timers
+(**Ctrl+Alt+Shift+T**) and downloads, each switchable under **Activities** in the right-click or tray menu.
+Notifications and the SDK come later. Progress and test evidence are in [docs/PROGRESS.md](docs/PROGRESS.md); the full
+plan is in [docs/BLUEPRINT.md](docs/BLUEPRINT.md).
 
 ### Trying the Island (development build)
 
@@ -35,10 +37,10 @@ src/IrisAura.Island/bin/Release/net10.0-windows10.0.19041.0/IrisAura.Island.exe 
 |---|---|
 | `IrisAura.Island.exe --debug` | Starts the Island with the debug panel (fake media, timer, split, banner, options, live stats) |
 | `IrisAura.Island.exe --quit` | Closes the running Island |
-| `IrisAura.Island.exe --selftest report.json` | Runs the integration self-test (focus, click-through, placement, full screen, CPU, frames) and writes a report |
+| `IrisAura.Island.exe --selftest report.json [--snapshots dir] [--test-camera]` | Runs the integration self-test (focus, click-through, placement, full screen, panel, CPU, frames) and writes a report; optionally saves renders of the panel and tests the camera mirror with the real camera |
 | `IrisAura.Island.exe --system-probe report.json [--nudge-volume] [--nudge-brightness] [--probe-mic]` | Checks volume, brightness, battery, Bluetooth, microphone and download detection on this PC (no names recorded; nudges are ±1 % and restored) |
 
-Hover the pill to expand it, click to pin it, click the bubble to swap, scroll over the pill to cycle
+Hover the pill to open the panel, click to pin it, drop files on it to keep them in the Tray, click the bubble to swap, scroll over the pill to cycle
 activities, right-click the pill or the tray icon for the menu, press **Ctrl+Alt+Shift+I** to control it
 from the keyboard (Esc to return). Logs: `%LocalAppData%\IrisAura\logs`.
 

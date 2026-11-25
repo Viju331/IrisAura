@@ -25,7 +25,9 @@ its own legal review.
 | Timer | User | `%LocalAppData%\IrisAura\island-timer.json`: duration and end time only | Deleted when the timer ends or is cancelled |
 | Settings | User | `%LocalAppData%\IrisAura\island-settings.json`: provider id → on/off | — |
 | Quiet mode, hide-until | User | `%LocalAppData%\IrisAura\island-state.json` | — |
-| File-shelf paths | User | `%LocalAppData%\IrisAura\` (Phase 4B) | No content of shelved files is copied |
+| File tray paths | User (files dropped on the Island) | `%LocalAppData%\IrisAura\island-shelf.json`: paths only, max 30 | Files are never copied, opened (except by the user's click) or read; paths never logged; "Clear tray" deletes the list |
+| Camera mirror frames | Webcam, **only after the user switches the mirror on**, only while the panel shows | **Never stored**: drawn and dropped; the last frame is cleared when the camera stops | Shared read-only camera access; camera dot on while it runs; setting `CameraMirror` in island-settings.json |
+| Calendar | — | — | Not read: the strip shows dates only (events need consent and package identity, KI-035) |
 | Logs | Island | `%LocalAppData%\IrisAura\logs` | Provider ids, states, error types. Never notification content, media titles, device, app or file names |
 
 Call detection (beta, off by default) uses only which known call app holds the microphone and whether it

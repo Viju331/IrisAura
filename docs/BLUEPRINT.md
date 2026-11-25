@@ -1296,6 +1296,11 @@ A solo developer should normally do 0A, then Island Phases 1–5, and fit 0B/0C 
   mirror, Bluetooth device activity in the new design.
 - **Acceptance:** §8.8 budgets still met (measured), focus/click-through/full-screen tests still pass, camera mirror off
   by default with the camera released when the panel closes, no calendar or camera access without user consent.
+- **Implementation notes (2026-11-25, ADR 0008):**
+  - The window grows to 740 × 290 only while the panel is open (resized once around the same centre), so compact states keep the small, cheap layered surface. The waveform runs at 15 Hz inside the panel. Measured: panel open 0.82 % CPU.
+  - Hovering the idle pill opens the panel (owner's design); the idle pill takes clicks only while the cursor is on it. Also: tray menu "Open panel", and dragging files onto the Island (opens the Tray tab).
+  - The panel replaces the old expanded views; the main activity's expanded view is the panel's "now" card.
+  - Camera mirror: opt-in, SharedReadOnly, only while the Island tab shows, released on close (proved by an exclusive open), frames never stored. Calendar: dates only (events need KI-026's package identity).
 
 ### Phase 5: IrisAura Island SDK and standalone release (1–2 weeks)
 
