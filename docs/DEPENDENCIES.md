@@ -14,6 +14,30 @@
 |---|---|---|---|---|---|
 | IrisAura.Contracts | netstandard2.0 | NETStandard.Library | [2.0.3, ) | 2.0.3 | direct |
 | IrisAura.Contracts | netstandard2.0 | Microsoft.NETCore.Platforms |  | 1.1.0 | transitive |
+| IrisAura.Face.Tests | net10.0-windows10.0.19041.0 | FluentAssertions | 7.2.2 | 7.2.2 | direct |
+| IrisAura.Face.Tests | net10.0-windows10.0.19041.0 | xunit.v3 | 4.0.3 | 4.0.3 | direct |
+| IrisAura.Face.Tests | net10.0-windows10.0.19041.0 | Microsoft.ApplicationInsights |  | 2.23.0 | transitive |
+| IrisAura.Face.Tests | net10.0-windows10.0.19041.0 | Microsoft.Bcl.AsyncInterfaces |  | 6.0.0 | transitive |
+| IrisAura.Face.Tests | net10.0-windows10.0.19041.0 | Microsoft.Testing.Extensions.Telemetry |  | 2.5.2 | transitive |
+| IrisAura.Face.Tests | net10.0-windows10.0.19041.0 | Microsoft.Testing.Extensions.TrxReport.Abstractions |  | 2.5.2 | transitive |
+| IrisAura.Face.Tests | net10.0-windows10.0.19041.0 | Microsoft.Testing.Platform |  | 2.5.2 | transitive |
+| IrisAura.Face.Tests | net10.0-windows10.0.19041.0 | Microsoft.Testing.Platform.MSBuild |  | 2.5.2 | transitive |
+| IrisAura.Face.Tests | net10.0-windows10.0.19041.0 | Microsoft.Win32.Registry |  | 5.0.0 | transitive |
+| IrisAura.Face.Tests | net10.0-windows10.0.19041.0 | Microsoft.Win32.SystemEvents |  | 6.0.0 | transitive |
+| IrisAura.Face.Tests | net10.0-windows10.0.19041.0 | System.Configuration.ConfigurationManager |  | 6.0.0 | transitive |
+| IrisAura.Face.Tests | net10.0-windows10.0.19041.0 | System.Drawing.Common |  | 6.0.0 | transitive |
+| IrisAura.Face.Tests | net10.0-windows10.0.19041.0 | System.Security.AccessControl |  | 6.0.1 | transitive |
+| IrisAura.Face.Tests | net10.0-windows10.0.19041.0 | System.Security.Cryptography.ProtectedData |  | 6.0.0 | transitive |
+| IrisAura.Face.Tests | net10.0-windows10.0.19041.0 | System.Security.Permissions |  | 6.0.0 | transitive |
+| IrisAura.Face.Tests | net10.0-windows10.0.19041.0 | System.Windows.Extensions |  | 6.0.0 | transitive |
+| IrisAura.Face.Tests | net10.0-windows10.0.19041.0 | xunit.analyzers |  | 2.3.0 | transitive |
+| IrisAura.Face.Tests | net10.0-windows10.0.19041.0 | xunit.v3.assert |  | 4.0.3 | transitive |
+| IrisAura.Face.Tests | net10.0-windows10.0.19041.0 | xunit.v3.common |  | 4.0.3 | transitive |
+| IrisAura.Face.Tests | net10.0-windows10.0.19041.0 | xunit.v3.core.mtp-v2 |  | 4.0.3 | transitive |
+| IrisAura.Face.Tests | net10.0-windows10.0.19041.0 | xunit.v3.extensibility.core |  | 4.0.3 | transitive |
+| IrisAura.Face.Tests | net10.0-windows10.0.19041.0 | xunit.v3.mtp-v2 |  | 4.0.3 | transitive |
+| IrisAura.Face.Tests | net10.0-windows10.0.19041.0 | xunit.v3.runner.common |  | 4.0.3 | transitive |
+| IrisAura.Face.Tests | net10.0-windows10.0.19041.0 | xunit.v3.runner.inproc.console |  | 4.0.3 | transitive |
 | IrisAura.Island | net10.0-windows10.0.19041.0 | Serilog | 4.4.0 | 4.4.0 | direct |
 | IrisAura.Island | net10.0-windows10.0.19041.0 | Serilog.Sinks.File | 7.0.0 | 7.0.0 | direct |
 | IrisAura.Island | net10.0-windows10.0.19041.0 | NAudio |  | 3.3.0 | transitive |

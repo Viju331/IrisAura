@@ -15,7 +15,8 @@
             "src\\IrisAura.Face.Camera\\IrisAura.Face.Camera.csproj",
             "src\\IrisAura.Face.Security\\IrisAura.Face.Security.csproj",
             "samples\\IrisAura.Island.SampleApp\\IrisAura.Island.SampleApp.csproj",
-            "tests\\IrisAura.Island.Tests\\IrisAura.Island.Tests.csproj"
+            "tests\\IrisAura.Island.Tests\\IrisAura.Island.Tests.csproj",
+            "tests\\IrisAura.Face.Tests\\IrisAura.Face.Tests.csproj"
         ]
     }
 }

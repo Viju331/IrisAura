@@ -7,7 +7,7 @@ named reviewer, a date and linked evidence. Independent review means someone oth
 
 | Gate | Phase | Required before | Reviewer | Date | Result | Evidence |
 |---|---|---|---|---|---|---|
-| Pre-logon camera feasibility (A/B/C outcome) | 0B | Phase 8 | | | ⏳ | |
+| Pre-logon camera feasibility (A/B/C outcome) | 0B | Phase 8 | owner decision | 2026-11-26 | ⏳ (B) proposed; (A) not proven | [PHASE_0B_CAMERA_REPORT.md](PHASE_0B_CAMERA_REPORT.md), ADR 0011 |
 | Credential Provider feasibility + recovery | 0C | Phase 8 | | | ⏳ | |
 | Account-type support matrix + credential lifecycle design | 0C | Phase 8 | | | ⏳ | |
 | Island SDK pipe security (ACL, squatting, impersonation, rate limits) | 5 | Release 1 | self-review only; **independent reviewer needed** | 2026-11-25 | ⏳ self-review passed | ADR 0009, `SdkTests`, `docs/evidence/phase-5-sdk-e2e-2026-11-25.json` |
@@ -118,6 +118,14 @@ named reviewer, a date and linked evidence. Independent review means someone oth
       development builds; no network.
 - [x] No WiX custom-action binaries; no elevated code of ours runs during install.
 - [ ] Production certificate, RFC 3161 timestamp, SBOM (CycloneDX) and independent review before Release 1 ships.
+
+### Phase 0B (camera feasibility) — self-review, 2026-11-26
+
+- [x] Diagnostic only: opens cameras through documented `Windows.Media.Capture` APIs in the user's session; no
+      service, no LocalSystem, no credential provider, no driver/policy/privacy change, no bypass.
+- [x] Frames are never stored; reports hold device model, build, VID/PID, driver version, frame counts/sizes/timing and
+      an aggregate brightness; no serial numbers or user names (checked).
+- [x] Camera released after every probe (`MediaCapture` disposed); the "camera in use" holder is killed afterwards.
 
 ## Findings
 

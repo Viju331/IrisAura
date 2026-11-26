@@ -11,7 +11,7 @@ numbers, user names or any biometric data.
 | Windows Hello IR laptop with ESS | 1 | ⏳ | |
 | Windows Hello IR laptop without ESS | 1 | ⏳ | |
 | RGB-only laptop (Intel) | 1 | ⏳ | |
-| RGB-only laptop (AMD) | 1 | ⏳ | |
+| RGB-only laptop (AMD) | 1 | ✅ user session | DEV-01 (HP Laptop 15s-gr0xxx) |
 | External USB webcam | 1 | ⏳ | |
 | Snapdragon ARM64 laptop | 1 | ⏳ | |
 
@@ -19,13 +19,16 @@ numbers, user names or any biometric data.
 
 | ID | Model | CPU / Arch | Windows edition + build | Role |
 |---|---|---|---|---|
-| DEV-01 | Developer workstation | x64 | Windows 11 Home, build 26300 | Build machine only. **Never** a credential-provider test device. |
+| DEV-01 | HP Laptop 15s-gr0xxx (developer workstation) | AMD x64 | Windows 11 Home Single Language 26H2, build 26300.10075 | Build machine; Phase 0B user-session camera tests. **Never** a credential-provider or LocalSystem/pre-logon test device. |
 
 ## Camera results (Phase 0B)
 
 | Date | Device | Windows build | Camera (VID:PID) | Driver | Kinds (RGB/IR/Depth) | Hello / ESS | Context (user / elevated / LocalSystem / locked / pre-logon) | Frames received? | Notes / evidence |
 |---|---|---|---|---|---|---|---|---|---|
-| | | | | | | | | | |
+| 2026-11-26 | DEV-01 | 26300.10075 | HP TrueVision HD Camera (04F2:B6F1), front, built in | 10.0.26100.10068 | RGB only | Hello PIN only; no face sensor; ESS not configured | user, unlocked | ✅ exclusive 82 / shared 89 frames in 3 s (YUY2 640×360) | `docs/evidence/phase-0b/DEV-01-user.json` |
+| 2026-11-26 | DEV-01 | 26300.10075 | same | same | RGB | same | user, camera held exclusively by another process | ⚠ exclusive: opens, 0 frames · ✅ shared 87 frames | `DEV-01-camera-in-use.json` |
+| | DEV-01 | | same | | | | elevated · locked · after resume | ⏳ owner checks | PHASE_0B_CAMERA_REPORT.md |
+| | test device | | | | | | LocalSystem / Session 0 · pre-logon | ⏳ not on DEV-01 | ADR 0011 |
 
 ## Island results (Phases 1–5)
 

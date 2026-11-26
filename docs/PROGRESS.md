@@ -508,3 +508,38 @@ a production certificate is bought; Phase 0B next.
 - HKLM Run key instead of the §12.1 logon scheduled task (no restart-on-failure; revisit for Phase 8).
 - No sparse identity package registration (notifications deferred, KI-026).
 - No update download/check (network approval needed, KI-043); x64 MSI only (KI-048).
+
+---
+
+## Phase 0B — camera and pre-logon feasibility (user session on DEV-01)
+
+**Branch:** `main` · **Date:** 2026-11-26 · **Status:** ⏳ gate open. User-session capture proven on one device class; LocalSystem / pre-logon not tested (excluded on the primary machine). Proposed outcome **(B)** — owner decision (ADR 0011).
+
+### Delivered
+
+- `IrisAura.Face.Camera`: discovery (`MediaFrameSourceGroup`: RGB/IR/Depth sources, USB VID/PID, enclosure panel,
+  virtual-camera flag) and `CameraProbe` (exclusive and shared-read-only frame reading; size, format, timing,
+  aggregate brightness; frames never stored; camera released after each probe); tier classification (T1/T2/T3).
+- `IrisAura.Tools cameras [--probe] [--with-holder] [--delay N] [--label] [--out]`: report with context (elevated,
+  LocalSystem, session, input desktop), device model and build, driver versions, Windows Hello / face sensors / ESS,
+  camera privacy settings and policy.
+- `tests/IrisAura.Face.Tests` (12 tests; separate from the Island tests so no Island project references Face code).
+- Report: [PHASE_0B_CAMERA_REPORT.md](PHASE_0B_CAMERA_REPORT.md); evidence in `docs/evidence/phase-0b/`.
+
+### Acceptance (BLUEPRINT §10 Phase 0B)
+
+| Criterion | Status |
+|---|---|
+| Minimal camera diagnostic app; no face recognition | ✅ |
+| RGB/IR/Depth discovery and frame acquisition — normal user | ✅ DEV-01 (RGB only; no IR/Depth present) |
+| — camera in use | ✅ shared works; ⚠ exclusive opens with 0 frames (KI-051) |
+| — elevated, locked, sleep/resume | ⏳ owner checks (KI-052) |
+| — LocalSystem / Session 0, pre-logon | ⏳ test device only (KI-050) |
+| Windows build, device model, VID/PID, driver, session, account, policy, API result, frames received | ✅ recorded per run |
+| x64 and ARM64 | ⏳ x64 only (KI-053) |
+| Evidence report choosing A / B / C | ✅ report; **(B) proposed**, owner to confirm (ADR 0011) |
+
+### Tests
+
+344 unit tests (332 Island + 12 Face). Live probes on DEV-01: user session (exclusive 82 / shared 89 frames in 3 s)
+and camera-in-use (exclusive 0 / shared 87).

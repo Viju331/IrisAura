@@ -4,5 +4,12 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <RootNamespace>IrisAura.Tools</RootNamespace>
+    <!-- Source-generated [LibraryImport] (input-desktop check in CameraDiagnostics). -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Camera diagnostics (Phase 0B). Tools is a developer CLI, not part of IrisAura Island. -->
+    <ProjectReference Include="..\IrisAura.Face.Camera\IrisAura.Face.Camera.csproj" />
+  </ItemGroup>
 </Project>

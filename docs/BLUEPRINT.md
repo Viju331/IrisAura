@@ -519,7 +519,7 @@ IrisAura/
 - **Discovery:** `ICameraDiscovery.Enumerate()` returns `CameraInfo{Id, Name, Kinds[Color|Infrared|Depth], IsBuiltIn, IsVirtual, VidPid, MaxIrFormat}`.
 - **Streaming:** `ICameraSource.StartAsync(kinds, ct)` returns `IAsyncEnumerable<FramePair{Rgb?, Ir?, Timestamp}>`.
   - Use `MediaFrameReaderAcquisitionMode.Realtime`.
-  - If exclusive access fails, retry in `SharedReadOnly` mode.
+  - If exclusive access fails, retry in `SharedReadOnly` mode. **Phase 0B finding:** on a busy camera, exclusive mode initialises and then delivers no frames without an error, so treat "no frame within ~1 s" as the failure.
 - **Tier decision:**
   - Windows Hello available → **T1**
   - Readable IR + RGB in the same source group → **T2**
@@ -1255,6 +1255,7 @@ A solo developer should normally do 0A, then Island Phases 1–5, and fit 0B/0C 
 - Test x64 and ARM64 where available. Do not infer ARM64 behaviour from x64.
 - **Acceptance:** a reproducible evidence report for every intended hardware class. The report explicitly chooses one of: (A) pre-logon capture proven on the supported matrix; (B) capture only in a user session; (C) unsupported.
 - **Gate:** if (A) is not proven, stop the custom pre-logon unlock track. Continue with IrisAura Island and IrisAura Face Lab only.
+- **Status (2026-11-26):** one class tested (RGB-only AMD laptop, user session): capture works; exclusive mode on a busy camera opens but delivers no frames (fallback = timeout → SharedReadOnly). LocalSystem/pre-logon not tested on the primary machine. Proposed outcome **(B)**, owner decision pending ([PHASE_0B_CAMERA_REPORT.md](PHASE_0B_CAMERA_REPORT.md), ADR 0011).
 
 ### Phase 0C: Credential Provider feasibility spike (3–5 days; GO/NO-GO)
 

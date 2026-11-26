@@ -1,0 +1,90 @@
+{
+  "tool": "IrisAura.Tools cameras",
+  "label": "user-session",
+  "timestamp": "2026-11-26T10:32:20.2284747\u002B05:30",
+  "context": {
+    "elevated": false,
+    "localSystem": false,
+    "sessionId": 2,
+    "inputDesktop": "Default",
+    "processArchitecture": "X64"
+  },
+  "device": {
+    "manufacturer": "HP",
+    "model": "HP Laptop 15s-gr0xxx",
+    "windowsBuild": "26300.10075",
+    "windowsVersion": "26H2",
+    "edition": "CoreSingleLanguage",
+    "architecture": "X64"
+  },
+  "windowsHello": {
+    "keyCredentialSupported": true,
+    "faceSensors": [],
+    "enhancedSignInSecurity": {
+      "secureBiometricsEnabled": null
+    }
+  },
+  "cameraPrivacy": {
+    "deviceWide": "Allow",
+    "user": "Allow",
+    "desktopApps": "Allow",
+    "policyLetAppsAccessCamera": null
+  },
+  "cameraInUseByAnotherProcess": false,
+  "drivers": [
+    {
+      "Name": "HP TrueVision HD Camera",
+      "vidPid": "04F2:B6F1",
+      "driverVersion": "10.0.26100.10068",
+      "driverDate": "2006-06-21"
+    }
+  ],
+  "cameras": [
+    {
+      "Name": "HP TrueVision HD Camera",
+      "VidPid": "04F2:B6F1",
+      "Panel": "Front",
+      "IsBuiltIn": true,
+      "IsVirtual": false,
+      "sources": [
+        {
+          "kind": "Color",
+          "StreamType": "VideoRecord"
+        }
+      ],
+      "probes": [
+        {
+          "Kind": 0,
+          "SharingMode": "Exclusive",
+          "Opened": true,
+          "Frames": 82,
+          "FirstFrameMs": 473,
+          "Width": 640,
+          "Height": 360,
+          "Subtype": "YUY2",
+          "LitFrames": 82,
+          "MeanLevelMin": 11,
+          "MeanLevelMax": 127.9,
+          "Error": null,
+          "ReceivedFrames": true
+        },
+        {
+          "Kind": 0,
+          "SharingMode": "SharedReadOnly",
+          "Opened": true,
+          "Frames": 89,
+          "FirstFrameMs": 241,
+          "Width": 640,
+          "Height": 360,
+          "Subtype": "YUY2",
+          "LitFrames": 89,
+          "MeanLevelMin": 126.2,
+          "MeanLevelMax": 127.4,
+          "Error": null,
+          "ReceivedFrames": true
+        }
+      ]
+    }
+  ],
+  "tier": "T3ColorOnly"
+}

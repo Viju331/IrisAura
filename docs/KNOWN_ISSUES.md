@@ -54,10 +54,14 @@ Open issues, limitations and unverified assumptions. Close an item by linking th
 | KI-047 | Licensing | WiX OSMF EULA accepted in the build on the owner's decision; the maintenance fee must be paid for revenue-generating use (≥ US$10,000/year revenue). | Release licensing | Owner: arrange the OSMF payment | Open |
 | KI-048 | Installer | x64 MSI only; no ARM64 MSI yet. | ARM64 devices | Publish win-arm64 and build a second MSI | Open |
 | KI-049 | Installer | Installed first start measured 1314 ms (ReadyToRun; first launch after install, antivirus scan included). | Startup budget (KI-012) | Re-measure on later starts and on a quiet machine | Open |
+| KI-050 | Phase 0B | LocalSystem / Session 0 and pre-logon camera access untested (excluded on the primary machine; no test device). Outcome (A) cannot be proven; (B) proposed (ADR 0011). | Custom sign-in track | Owner: accept (B), or provide test devices + disposable setup | Open |
+| KI-051 | Camera | With another process holding the camera, `ExclusiveControl` initialises and starts but delivers **no frames** (no error). The fallback must be "no frame within ~1 s → SharedReadOnly". | Face Lab camera code | Implement in Phase 6 `ICameraSource` | Open |
+| KI-052 | Phase 0B | Elevated, locked-workstation and sleep/resume probes on DEV-01 not run (UAC prompt not approved; locking/sleep need the owner). | Evidence completeness | Owner checks in PHASE_0B_CAMERA_REPORT.md | Open |
+| KI-053 | Phase 0B | Only one device class (RGB-only AMD laptop) tested; no IR, depth, Hello face, ESS, external webcam or ARM64 device. | Hardware matrix | Owner to source devices (BLUEPRINT §11.2) | Open |
 
 ## Unverified blueprint items (⚠ VERIFY) carried forward
 
-Tracked in BLUEPRINT; listed here when work depends on them: pre-logon camera access (Phase 0B),
+Tracked in BLUEPRINT; listed here when work depends on them: pre-logon camera access (Phase 0B: untested, KI-050),
 IR stream access with Windows Hello/ESS (Phase 0B), WM_HOTKEY foreground permission (Phase 1),
 WPF 120 fps (Phase 1), `NotificationChanged` in desktop apps (Phase 4, deferred: KI-026), Bluetooth battery properties
 (Phase 4: KI-029), consent-store freshness per build (KI-028), volume-flyout hiding (not planned: KI-027), per-app SMTC support (Phase 3).

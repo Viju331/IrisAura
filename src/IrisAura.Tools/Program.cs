@@ -1,7 +1,10 @@
 using System.Security.Cryptography;
 using System.Text.Json;
 
-// IrisAura.Tools: developer and release commands (BLUEPRINT §6). Camera commands are added in Phase 0B.
+// IrisAura.Tools: developer and release commands (BLUEPRINT §6).
+//
+//   cameras [--probe] [--seconds N] [--delay N] [--with-holder] [--label TEXT] [--out FILE]
+//                                                          Phase 0B camera feasibility report (frames are never stored)
 //
 //   update-key create  [--name NAME]                       create a non-exportable ECDSA P-256 CNG key in your
 //                                                          user profile and print its public key (SPKI, base64)
@@ -12,6 +15,11 @@ using System.Text.Json;
 // The private key never leaves the Windows key store (CNG, current user, export not allowed).
 
 const string DefaultKey = "IrisAura Update Signing (Development)";
+
+if (args.ElementAtOrDefault(0) == "cameras")
+{
+    return await IrisAura.Tools.CameraDiagnostics.RunAsync(args);
+}
 
 try
 {
@@ -32,7 +40,7 @@ catch (Exception ex) when (ex is CryptographicException or IOException or Argume
 
 int Usage()
 {
-    Console.Error.WriteLine("usage: IrisAura.Tools update-key create|public [--name NAME] | update-manifest write --msi F --version V --out M | update-manifest sign --manifest M [--name NAME]");
+    Console.Error.WriteLine("usage: IrisAura.Tools cameras [--probe] [--seconds N] [--delay N] [--with-holder] [--label T] [--out F] | update-key create|public [--name NAME] | update-manifest write --msi F --version V --out M | update-manifest sign --manifest M [--name NAME]");
     return 2;
 }
 
