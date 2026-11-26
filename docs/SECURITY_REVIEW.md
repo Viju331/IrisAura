@@ -14,7 +14,7 @@ named reviewer, a date and linked evidence. Independent review means someone oth
 | Presentation-attack evaluation methodology | 7 | Phase 8 | | | ⏳ | |
 | Independent security review of sign-in prototype | 8 | Any external pilot | | | ⏳ | |
 | Legal / privacy review | 8, 9 | Any external pilot / release | | | ⏳ | |
-| Release security checklist (signing, SBOM, update verification) | 9 | Each release | | | ⏳ | |
+| Release security checklist (signing, SBOM, update verification) | 9 | Each release | self-review (Release 1, development-signed) | 2026-11-26 | ⏳ partial | ADR 0010; `docs/evidence/release-1-install-test-2026-11-26.json`; production signing, timestamp and SBOM outstanding |
 
 ## Phase checklists
 
@@ -107,6 +107,17 @@ named reviewer, a date and linked evidence. Independent review means someone oth
 - [x] New packages for the netstandard2.0 SDK only: System.Text.Json 10.0.15 and System.Security.Principal.Windows
       5.0.0 (approved in BLUEPRINT §4, MIT); DEPENDENCIES and THIRD_PARTY_NOTICES updated.
 - [ ] **Independent review** of the SDK pipe before Release 1 (gate above).
+
+### Release 1 (installer, signing, updates) — self-review, 2026-11-26
+
+- [x] Island-only MSI: no Face files, services or credential provider (install test checks all three).
+- [x] Installs to `%ProgramFiles%` (admin-only writable; THREAT_MODEL T-13, T-28); per-user data untouched.
+- [x] IrisAura binaries and the MSI Authenticode-signed (SHA-256); development certificate in `CurrentUser\My` only.
+- [x] Update verification: ECDSA P-256 manifest signature by a non-exportable CNG key, product, no downgrade, size,
+      SHA-256, MSI signer; tampered MSI and edited manifest rejected on the installed app; dev key trusted only in
+      development builds; no network.
+- [x] No WiX custom-action binaries; no elevated code of ours runs during install.
+- [ ] Production certificate, RFC 3161 timestamp, SBOM (CycloneDX) and independent review before Release 1 ships.
 
 ## Findings
 

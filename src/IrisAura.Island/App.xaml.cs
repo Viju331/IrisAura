@@ -89,6 +89,14 @@ public partial class App : Application
             return;
         }
 
+        var verifyIndex = Array.FindIndex(args, a => a.Equals("--verify-update", StringComparison.OrdinalIgnoreCase));
+        if (verifyIndex >= 0)
+        {
+            // Offline update verification (BLUEPRINT §12.5): --verify-update MANIFEST MSI [--trust-thumbprint SHA1]...
+            Shutdown(VerifyUpdate(args, verifyIndex));
+            return;
+        }
+
         var systemProbeIndex = Array.FindIndex(args, a => a.Equals("--system-probe", StringComparison.OrdinalIgnoreCase));
         if (systemProbeIndex >= 0)
         {
@@ -137,6 +145,13 @@ public partial class App : Application
 #if DEBUG
         debug = true;
 #endif
+        if (selfTestPath is null)
+        {
+            // Restart Manager closes the Island during an upgrade (installer) and starts it again afterwards; never
+            // restarted after a crash, hang or reboot through this registration (BLUEPRINT §12.1, ADR 0010).
+            Interop.NativeMethods.RegisterApplicationRestart(null, Interop.NativeMethods.RESTART_NO_CRASH | Interop.NativeMethods.RESTART_NO_HANG | Interop.NativeMethods.RESTART_NO_REBOOT);
+        }
+
         ConfigureLogging();
         DispatcherUnhandledException += (_, ex) =>
             Log.Error("Unhandled UI exception: {Type}: {Message}", ex.Exception.GetType().Name, ex.Exception.Message);
@@ -333,6 +348,33 @@ public partial class App : Application
         else
         {
             _debugPanel.Activate();
+        }
+    }
+
+    /// <summary>Exit codes: 0 valid, 1 usage, 2 rejected (reason on standard output).</summary>
+    private static int VerifyUpdate(string[] args, int index)
+    {
+        if (index + 2 >= args.Length)
+        {
+            return 1;
+        }
+
+        var pinned = args.Select((a, i) => (a, i)).Where(x => x.a.Equals("--trust-thumbprint", StringComparison.OrdinalIgnoreCase) && x.i + 1 < args.Length)
+            .Select(x => args[x.i + 1]).ToList();
+        try
+        {
+            var manifest = File.ReadAllBytes(args[index + 1]);
+            var signature = Convert.FromBase64String(File.ReadAllText(args[index + 1] + ".sig").Trim());
+            var installed = typeof(App).Assembly.GetName().Version ?? new Version(0, 0);
+            var result = Update.UpdateVerifier.Verify(manifest, signature, args[index + 2], installed, Update.UpdateKeys.All,
+                msi => Update.Authenticode.Check(msi, pinned));
+            File.WriteAllText(args[index + 1] + ".verify.txt", $"{result.Verdict}: {result.Detail}{Environment.NewLine}");
+            return result.IsValid ? 0 : 2;
+        }
+        catch (Exception ex) when (ex is IOException or FormatException or UnauthorizedAccessException)
+        {
+            File.WriteAllText(args[index + 1] + ".verify.txt", $"Error: {ex.GetType().Name}{Environment.NewLine}");
+            return 2;
         }
     }
 

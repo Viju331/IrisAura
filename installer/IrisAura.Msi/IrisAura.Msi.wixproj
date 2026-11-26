@@ -1,0 +1,30 @@
+<Project Sdk="WixToolset.Sdk">
+  <!-- IrisAura Island per-machine MSI (BLUEPRINT §12.1, Release 1). Island only: never a Face service or a credential
+       provider. WiX 7 (version pinned in global.json "msbuild-sdks"); the owner pays the WiX Open Source Maintenance
+       Fee for revenue-generating use (decision 2026-11-25, ADR 0010).
+
+       Build through scripts/build-release.ps1, which publishes the self-contained app into $(PublishDir) first:
+         dotnet build installer/IrisAura.Msi -c Release -p:ProductVersion=1.0.0 -p:PublishDir=<folder>\ -->
+  <PropertyGroup>
+    <OutputType>Package</OutputType>
+    <!-- Accepts the WiX v7 Open Source Maintenance Fee EULA: the owner decided (2026-11-25) to use WiX and pay the
+         OSMF for revenue-generating use (ADR 0010). -->
+    <AcceptEula>wix7</AcceptEula>
+    <InstallerPlatform>x64</InstallerPlatform>
+    <ProductVersion Condition="'$(ProductVersion)' == ''">1.0.0</ProductVersion>
+    <PublishDir Condition="'$(PublishDir)' == ''">$(MSBuildThisFileDirectory)..\..\artifacts\release\publish\</PublishDir>
+    <OutputName>IrisAura.Island-$(ProductVersion)-x64</OutputName>
+    <DefineConstants>ProductVersion=$(ProductVersion)</DefineConstants>
+    <!-- ICE validation needs the Windows Installer service and admin rights on some machines; run it in release builds. -->
+    <SuppressValidation Condition="'$(Configuration)' != 'Release'">true</SuppressValidation>
+    <!-- ICE38/ICE43/ICE57 assume the Start menu folder may be a user profile. This package is per-machine only
+         (Scope="perMachine", ALLUSERS=1), so ProgramMenuFolder is the all-users Start menu and an HKLM key path is right. -->
+    <SuppressIces>ICE38;ICE43;ICE57</SuppressIces>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <BindPath Include="$(PublishDir)" BindName="publish" />
+    <BindPath Include="$(MSBuildThisFileDirectory)licenses" BindName="licenses" />
+    <BindPath Include="$(MSBuildThisFileDirectory)..\.." BindName="repo" />
+  </ItemGroup>
+</Project>

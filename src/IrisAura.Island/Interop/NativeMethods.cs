@@ -203,6 +203,15 @@ internal static unsafe partial class NativeMethods
     public static partial int GetSystemMetrics(int index);
 
     /// <summary>System-wide idle/kernel/user time (FILETIME ticks); kernel time includes idle time.</summary>
+    public const int RESTART_NO_CRASH = 1;
+    public const int RESTART_NO_HANG = 2;
+    public const int RESTART_NO_PATCH = 4;
+    public const int RESTART_NO_REBOOT = 8;
+
+    /// <summary>Lets Restart Manager restart the app after an update closed it (documented, kernel32).</summary>
+    [LibraryImport("kernel32.dll", StringMarshalling = StringMarshalling.Utf16)]
+    public static partial int RegisterApplicationRestart(string? commandLine, int flags);
+
     [LibraryImport("kernel32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static partial bool GetSystemTimes(out long idleTime, out long kernelTime, out long userTime);

@@ -1,0 +1,156 @@
+﻿{
+    "tool":  "scripts/test-install.ps1",
+    "timestamp":  "2026-11-26T10:22:02.2297035+05:30",
+    "windowsBuild":  "10.0.26300.0",
+    "old":  "1.0.0",
+    "new":  "1.0.1",
+    "passed":  29,
+    "failed":  0,
+    "checks":  [
+                   {
+                       "check":  "install: msiexec succeeded",
+                       "pass":  true,
+                       "detail":  "from the earlier run\u0027s install log"
+                   },
+                   {
+                       "check":  "install: one Programs and Features entry",
+                       "pass":  true,
+                       "detail":  "1 entries, version 1.0.0"
+                   },
+                   {
+                       "check":  "install: files in Program Files",
+                       "pass":  true,
+                       "detail":  "C:\\Program Files\\IrisAura\\Island"
+                   },
+                   {
+                       "check":  "install: IrisAura.Island.exe signed (development certificate)",
+                       "pass":  true,
+                       "detail":  "CN=IrisAura Development"
+                   },
+                   {
+                       "check":  "install: version",
+                       "pass":  true,
+                       "detail":  "1.0.0+a2cd4fc95d3bd125d4775a694ceb48b2ef7d982e"
+                   },
+                   {
+                       "check":  "install: starts at sign-in (HKLM Run)",
+                       "pass":  true,
+                       "detail":  "\"C:\\Program Files\\IrisAura\\Island\\IrisAura.Island.exe\""
+                   },
+                   {
+                       "check":  "install: Start menu shortcut",
+                       "pass":  true,
+                       "detail":  ""
+                   },
+                   {
+                       "check":  "install: CLI folder on the system PATH",
+                       "pass":  true,
+                       "detail":  ""
+                   },
+                   {
+                       "check":  "install: Island only (no Face files, services or credential provider)",
+                       "pass":  true,
+                       "detail":  "face files 0, services 0, providers 0"
+                   },
+                   {
+                       "check":  "install: installed Island starts from Program Files",
+                       "pass":  true,
+                       "detail":  "pid 25004"
+                   },
+                   {
+                       "check":  "install: SDK works from the installed CLI (pinned dev certificate)",
+                       "pass":  true,
+                       "detail":  ""
+                   },
+                   {
+                       "check":  "install: startup to first frame (info, ReadyToRun)",
+                       "pass":  true,
+                       "detail":  "1314 ms"
+                   },
+                   {
+                       "check":  "update: 1.0.1 accepted by the installed 1.0.0",
+                       "pass":  true,
+                       "detail":  "Valid: IrisAura Island 1.0.1 verified."
+                   },
+                   {
+                       "check":  "update: tampered installer rejected",
+                       "pass":  true,
+                       "detail":  "HashMismatch: The installer\u0027s SHA-256 does not match the manifest."
+                   },
+                   {
+                       "check":  "update: edited manifest rejected",
+                       "pass":  true,
+                       "detail":  "BadManifestSignature: The manifest is not signed by a trusted IrisAura update key."
+                   },
+                   {
+                       "check":  "upgrade: msiexec succeeded without a reboot",
+                       "pass":  true,
+                       "detail":  "exit 0 (3010 would mean a reboot is needed)"
+                   },
+                   {
+                       "check":  "upgrade: one entry, new version",
+                       "pass":  true,
+                       "detail":  "1 entries, version 1.0.1"
+                   },
+                   {
+                       "check":  "upgrade: files updated",
+                       "pass":  true,
+                       "detail":  "1.0.1+a2cd4fc95d3bd125d4775a694ceb48b2ef7d982e"
+                   },
+                   {
+                       "check":  "upgrade: Island running again (Restart Manager)",
+                       "pass":  true,
+                       "detail":  "pid 19796"
+                   },
+                   {
+                       "check":  "upgrade: SDK answers after the upgrade",
+                       "pass":  true,
+                       "detail":  ""
+                   },
+                   {
+                       "check":  "uninstall: msiexec succeeded",
+                       "pass":  true,
+                       "detail":  "exit 0"
+                   },
+                   {
+                       "check":  "uninstall: Island closed",
+                       "pass":  true,
+                       "detail":  ""
+                   },
+                   {
+                       "check":  "uninstall: no Programs and Features entry",
+                       "pass":  true,
+                       "detail":  ""
+                   },
+                   {
+                       "check":  "uninstall: program folder removed",
+                       "pass":  true,
+                       "detail":  ""
+                   },
+                   {
+                       "check":  "uninstall: sign-in start removed",
+                       "pass":  true,
+                       "detail":  ""
+                   },
+                   {
+                       "check":  "uninstall: Start menu shortcut removed",
+                       "pass":  true,
+                       "detail":  ""
+                   },
+                   {
+                       "check":  "uninstall: PATH entry removed",
+                       "pass":  true,
+                       "detail":  ""
+                   },
+                   {
+                       "check":  "uninstall: HKLM\\Software\\IrisAura removed",
+                       "pass":  true,
+                       "detail":  ""
+                   },
+                   {
+                       "check":  "uninstall: per-user data kept (by design)",
+                       "pass":  true,
+                       "detail":  "%LocalAppData%\\IrisAura"
+                   }
+               ]
+}

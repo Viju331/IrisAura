@@ -31,6 +31,10 @@ its own legal review.
 | Calendar | — | — | Not read: the strip shows dates only (events need consent and package identity, KI-035) |
 | Logs | Island | `%LocalAppData%\IrisAura\logs` | Provider ids, states, error types. Never notification content, media titles, device, app or file names |
 
+Installing and uninstalling: the MSI writes only to `%ProgramFiles%\IrisAura`, the all-users Start menu, the HKLM
+Run key and the system PATH. Uninstalling removes those; each user's `%LocalAppData%\IrisAura` (settings, tray list,
+timer, logs) stays until the user deletes it.
+
 Call detection (beta, off by default) uses only which known call app holds the microphone and whether it
 plays audio; it never records or analyses audio. The `--system-probe --probe-mic` diagnostic opens the
 microphone for a few seconds with a visible notice and discards the audio unread.

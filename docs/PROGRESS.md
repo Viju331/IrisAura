@@ -453,3 +453,58 @@ success/alert); 15 new original glyphs (no Bluetooth logo); `--system-probe` dia
 - Activities outlive connections (TTL default 1 h); button presses are delivered only to a connected client.
 - CLI hand-parsed (no System.CommandLine).
 - The default client check accepts only pinned thumbprints until the production publisher exists.
+
+---
+
+## Release 1 — IrisAura Island installer, signing and update verification (Phase 5 gate)
+
+**Branch:** `main` · **Date:** 2026-11-26 · **Status:** ✅ MSI installs, upgrades and uninstalls cleanly on DEV-01 (development-signed); ⏳ final Release 1 needs the production certificate + timestamp, the independent SDK review and the OSMF payment.
+
+### Owner decisions (2026-11-26)
+
+WiX v7 with the Open Source Maintenance Fee; install tests on DEV-01 with UAC approval; development certificate until
+a production certificate is bought; Phase 0B next.
+
+### Scope delivered (BLUEPRINT §12.1–§12.5, §13; ADR 0010)
+
+- `installer/IrisAura.Msi` (WiX 7.0.1): per-machine, `%ProgramFiles%\IrisAura\Island`, self-contained ReadyToRun app,
+  `irisaura-island` CLI on the system PATH, Start-menu shortcut, start at sign-in (HKLM Run), licence notices
+  (`THIRD_PARTY_NOTICES.txt`, `LICENSE.txt`, `licenses\`). Island only.
+- Upgrades while running: Restart Manager closes the Island; `RegisterApplicationRestart` brings it back.
+- `scripts/build-release.ps1`: publish, sign IrisAura binaries and the MSI (SHA-256; `-TimestampUrl` for production),
+  SHA256SUMS, signed update manifest, offline self-check. `scripts/test-install.ps1`: install/upgrade/uninstall test.
+- Update verification (`--verify-update`, `UpdateVerifier`): ECDSA P-256 manifest signature (non-exportable CNG key via
+  `IrisAura.Tools update-key` / `update-manifest`), product, no downgrade, size, SHA-256, MSI signer. Offline; no
+  download built (KI-043).
+- Menu: version line and "Third-party notices".
+- `RuntimeIdentifiers=win-x64` for stable lock files.
+
+### Acceptance (Release 1 gate, BLUEPRINT §10 Phase 5)
+
+| Criterion | Status | Evidence |
+|---|---|---|
+| Installs, upgrades, uninstalls and runs without IrisAura Face components | ✅ | `docs/evidence/release-1-install-test-2026-11-26.json`: 29/29 — Island only (0 Face files, services, providers), upgrade 1.0.0 → 1.0.1 while running with no reboot and the Island restarted, uninstall removes files, Run key, shortcut, PATH and HKLM key |
+| Licence notices | ✅ (⚠ Windows SDK projection terms to verify, KI-046) | Installed `THIRD_PARTY_NOTICES.txt` + `licenses\` (.NET runtime, WPF, Serilog, NAudio, CsWinRT, Apache-2.0) |
+| Update verification | ✅ offline | Installed 1.0.0 accepted the signed 1.0.1 manifest; rejected a tampered MSI (hash) and an edited manifest (signature); 7 unit tests |
+| Signed with the production certificate (§12.4) | ⏳ | Development-signed; production certificate + timestamp by the owner (KI-039) |
+
+### Tests and measurements
+
+- **332 unit tests** (was 325; 7 update-verification tests).
+- Release artifacts (not committed): `artifacts/release/<version>/` — MSI ≈ 101 MB, SHA256SUMS, `update-manifest.json`
+  + `.sig`, `release.json`. Runtime 10.0.10 (KI-044).
+- Installed first start: 1314 ms (first launch after install, KI-049).
+
+### Owner checks
+
+1. Install `artifacts\release\1.0.1\IrisAura.Island-1.0.1-x64.msi` (double-click; Windows will say "unknown publisher"
+   until the production certificate). Sign out and in: the Island starts. Right-click → Third-party notices.
+2. Try `irisaura-island push --app Test --id hi --title Hello --trust-thumbprint <dev thumbprint>` from a new terminal.
+3. Uninstall from Settings → Apps.
+4. Arrange: production code-signing certificate, OSMF payment, independent review of the SDK pipe.
+
+### Deviations (ADR 0010)
+
+- HKLM Run key instead of the §12.1 logon scheduled task (no restart-on-failure; revisit for Phase 8).
+- No sparse identity package registration (notifications deferred, KI-026).
+- No update download/check (network approval needed, KI-043); x64 MSI only (KI-048).

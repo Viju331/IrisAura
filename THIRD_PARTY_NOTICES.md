@@ -19,7 +19,17 @@ test-only components are listed for completeness.
 | System.Security.Principal.Windows | 5.0.0 | MIT | https://github.com/dotnet/runtime — Copyright © .NET Foundation and Contributors | IrisAura.Island.Sdk (current user SID for the pipe name) |
 | System.Management (with System.CodeDom) | 10.0.15 | MIT | https://github.com/dotnet/runtime — Copyright © .NET Foundation and Contributors | IrisAura.Island.Providers (WMI brightness events) |
 
-Licence texts must be bundled with the installer and shown in *Settings → About → Third-party notices* (Phase 9).
+Since Release 1 the installer bundles this file as `THIRD_PARTY_NOTICES.txt` (right-click the Island → *Third-party
+notices*) and the licence texts in `licenses\` next to the app.
+
+Also redistributed by the self-contained installer:
+
+| Component | Version | Licence | Source | Notes |
+|---|---|---|---|---|
+| .NET runtime (Microsoft.NETCore.App) | 10.0.10 | MIT (+ third-party notices) | https://github.com/dotnet/runtime | `licenses\dotnet-runtime-LICENSE.txt`, `dotnet-runtime-THIRD-PARTY-NOTICES.txt` |
+| Windows Desktop runtime (WPF) | 10.0.10 | MIT | https://github.com/dotnet/wpf | `licenses\dotnet-windowsdesktop-LICENSE.txt` |
+| WinRT.Runtime (C#/WinRT) | with the Windows SDK projection | MIT | https://github.com/microsoft/CsWinRT | `licenses\CsWinRT-WinRT.Runtime-MIT.txt` |
+| Microsoft.Windows.SDK.NET (WinRT projection) | 10.0.19041.57 | Windows SDK licence | https://aka.ms/WinSDKLicenseURL | ⚠ VERIFY redistribution terms (KI-046) |
 
 ## Build-time and test-only components (not redistributed)
 
@@ -27,6 +37,7 @@ Licence texts must be bundled with the installer and shown in *Settings → Abou
 |---|---|---|
 | xunit.v3 (incl. Microsoft.Testing.Platform, MIT) | Apache-2.0 | Unit tests |
 | FluentAssertions 7.x | Apache-2.0 | Test assertions (v8+ is commercial; do not upgrade without a licence) |
+| WiX Toolset 7.0.1 (WixToolset.Sdk) | MS-RL source; binaries under the WiX OSMF EULA (fee for revenue-generating use) | Builds the MSI; no WiX binaries are shipped inside it (ADR 0010, KI-047) |
 
 ## Models
 

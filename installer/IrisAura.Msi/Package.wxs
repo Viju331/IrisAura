@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  IrisAura Island — per-machine MSI (BLUEPRINT §12.1; Release 1; ADR 0010).
+
+  Installs, for all users of the machine:
+    %ProgramFiles%\IrisAura\Island\        self-contained app (no .NET install needed) + irisaura-island.exe (SDK CLI)
+    Start menu shortcut "IrisAura Island"
+    HKLM ...\Run "IrisAura Island"          starts the Island at each user's sign-in (Task Manager → Startup apps can turn it off)
+    PATH (system)                           so scripts can call irisaura-island
+    Licence notices                         LICENSE, THIRD_PARTY_NOTICES.md, licenses\
+
+  Never installed here: any IrisAura Face component, service or credential provider (§12.1 "Island-only installer").
+  Per-user data (%LocalAppData%\IrisAura: settings, tray, timer, logs) belongs to each user and is not touched.
+  Upgrades are major upgrades; a running Island is closed by Restart Manager and restarted afterwards
+  (the Island registers with RegisterApplicationRestart).
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="IrisAura Island"
+           Manufacturer="IrisAura"
+           Version="$(var.ProductVersion)"
+           UpgradeCode="4FFDC4FE-723D-4CEF-A39D-B653A0065E43"
+           Scope="perMachine"
+           Compressed="yes"
+           Language="1033">
+    <SummaryInformation Description="IrisAura Island — desktop activity surface" Manufacturer="IrisAura" />
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of IrisAura Island is already installed." Schedule="afterInstallInitialize" />
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+
+    <Property Id="ARPNOMODIFY" Value="1" />
+    <Property Id="ARPNOREPAIR" Value="1" />
+    <Property Id="ARPCOMMENTS" Value="Shows music, timers, devices and your apps' activity at the top of the screen." />
+    <Property Id="ARPCONTACT" Value="IrisAura" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="IrisAuraFolder" Name="IrisAura">
+        <Directory Id="INSTALLFOLDER" Name="Island">
+          <Directory Id="LicensesFolder" Name="licenses" />
+        </Directory>
+      </Directory>
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder" />
+
+    <Feature Id="Island" Title="IrisAura Island" Level="1" AllowAbsent="no">
+      <Files Directory="INSTALLFOLDER" Include="!(bindpath.publish)**" />
+      <Files Directory="LicensesFolder" Include="!(bindpath.licenses)*.txt" />
+      <Component Directory="INSTALLFOLDER">
+        <File Source="!(bindpath.repo)LICENSE" Name="LICENSE.txt" />
+      </Component>
+      <Component Directory="INSTALLFOLDER">
+        <File Source="!(bindpath.repo)THIRD_PARTY_NOTICES.md" Name="THIRD_PARTY_NOTICES.txt" />
+      </Component>
+
+      <Component Id="StartMenuShortcut" Directory="ProgramMenuFolder">
+        <Shortcut Id="IslandShortcut" Name="IrisAura Island" Description="Start IrisAura Island"
+                  Target="[INSTALLFOLDER]IrisAura.Island.exe" WorkingDirectory="INSTALLFOLDER" />
+        <RegistryValue Root="HKLM" Key="Software\IrisAura\Island" Name="StartMenuShortcut" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+
+      <Component Id="StartAtSignIn" Directory="INSTALLFOLDER">
+        <RegistryValue Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\Run" Name="IrisAura Island"
+                       Type="string" Value="&quot;[INSTALLFOLDER]IrisAura.Island.exe&quot;" KeyPath="yes" />
+      </Component>
+
+      <Component Id="PathEntry" Directory="INSTALLFOLDER">
+        <Environment Id="IslandPath" Name="PATH" Value="[INSTALLFOLDER]" Part="last" Action="set" System="yes" Permanent="no" />
+        <RegistryValue Root="HKLM" Key="Software\IrisAura\Island" Name="InstallFolder" Type="string" Value="[INSTALLFOLDER]" KeyPath="yes" />
+      </Component>
+    </Feature>
+  </Package>
+</Wix>

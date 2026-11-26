@@ -14,6 +14,9 @@
     <NoWarn>$(NoWarn);CS1591</NoWarn>
     <Deterministic>true</Deterministic>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <!-- Release builds publish self-contained for win-x64 (installer, ADR 0010). Declaring the runtime here keeps
+         every restore (build, test, publish) writing the same lock files. -->
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     <!-- CI sets ContinuousIntegrationBuild=true so restore fails if a lock file is out of date. -->
     <RestoreLockedMode Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</RestoreLockedMode>
 

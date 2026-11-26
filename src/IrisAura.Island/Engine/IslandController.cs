@@ -1,3 +1,4 @@
+using System.IO;
 using System.Windows.Threading;
 using IrisAura.Island.Shell;
 using IrisAura.Island.Views;
@@ -23,6 +24,7 @@ public sealed class IslandController : IDisposable
     private const int MenuDebug = 5;
     private const int MenuQuit = 6;
     private const int MenuPanel = 7;
+    private const int MenuNotices = 8;
     private const int MenuTimerBase = 100;
     private const int MenuProviderBase = 200;
     private const int MenuSdkAppBase = 300;
@@ -445,6 +447,8 @@ public sealed class IslandController : IDisposable
                     Checked: !a.Blocked)).ToList()),
             MenuItemSpec.Separator,
             new(MenuSettings, "Settings (coming in a later update)", Enabled: false),
+            new(MenuNotices, "Third-party notices", Enabled: File.Exists(NoticesPath)),
+            new(0, $"IrisAura Island {typeof(IslandController).Assembly.GetName().Version?.ToString(3)}", Enabled: false),
         ]);
         if (DebugMenuEnabled)
         {
@@ -470,6 +474,17 @@ public sealed class IslandController : IDisposable
                 break;
             case MenuShow:
                 ShowAgain();
+                break;
+            case MenuNotices:
+                try
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(NoticesPath) { UseShellExecute = true })?.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    Log.Information("Could not open the notices: {Error}", ex.GetType().Name);
+                }
+
                 break;
             case MenuPanel:
                 _window.OpenPanel(); // stays open until clicked or the cursor has been over it and left
@@ -542,6 +557,9 @@ public sealed class IslandController : IDisposable
 
         return items;
     }
+
+    /// <summary>Licence notices installed next to the exe (THIRD_PARTY_NOTICES.txt; BLUEPRINT §13).</summary>
+    private static string NoticesPath => Path.Combine(AppContext.BaseDirectory, "THIRD_PARTY_NOTICES.txt");
 
     private static DateTimeOffset? Min(DateTimeOffset? a, DateTimeOffset? b) =>
         a is null ? b : b is null ? a : a < b ? a : b;

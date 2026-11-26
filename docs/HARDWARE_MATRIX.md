@@ -48,4 +48,5 @@ numbers, user names or any biometric data.
 | 2026-11-25 | DEV-01 | 26300 | same | Built-in camera (camera mirror, SharedReadOnly) | Pass | Frames at ≤ 15 fps 320×240; nothing stored |
 | 2026-11-25 | DEV-01 | 26300 | same | Phase 5 SDK end-to-end (`scripts/sdk-e2e.ps1`): development-signed Island, real CLI | 10/10 pass | Pinned thumbprint accepted; default check refuses dev-signed (0x800B0109) and unsigned builds; other app cannot end; `file:` link refused. `docs/evidence/phase-5-sdk-e2e-2026-11-25.json` |
 | 2026-11-25 | DEV-01 | 26300 | same | Sample app against the live Island | Pass | "Sample Deploy · 30%" shown, updates to Done |
+| 2026-11-26 | DEV-01 | 26300 | same | Release 1 MSI install 1.0.0 → upgrade 1.0.1 (Island running) → uninstall (`scripts/test-install.ps1`) | 29/29 pass | No reboot; Restart Manager restarted the Island; installed first start 1314 ms. `docs/evidence/release-1-install-test-2026-11-26.json` |
 | | | | 2+ monitors, mixed DPI | Placement, display change, follow cursor | ⏳ | Owner hardware needed (KI-013) |

@@ -9,6 +9,8 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- Required by source-generated [LibraryImport] Win32 interop (Interop/NativeMethods.cs). -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- Development releases (scripts/build-release.ps1 -Development) also trust the development update key. -->
+    <DefineConstants Condition="'$(TrustDevelopmentKeys)' == 'true'">$(DefineConstants);IRISAURA_DEV_TRUST</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>

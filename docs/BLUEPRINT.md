@@ -377,6 +377,7 @@ Before any implementation beyond a mock tile, produce a written design for local
 - `System.Management` (WMI brightness events)
 - `xunit.v3` (on Microsoft.Testing.Platform, opted in via `global.json`; no `Microsoft.NET.Test.Sdk` or `xunit.runner.visualstudio` needed — ADR 0002), `FluentAssertions` 7.x, `NSubstitute`
 - `Microsoft.Windows.CsWin32` (MIT; build-time source generator for Win32 P/Invoke such as `SetWinEventHook`, `SHQueryUserNotificationState`, `RegisterHotKey`; private asset, nothing redistributed)
+- `WixToolset.Sdk` 7.x (MS-RL source; binaries under the WiX OSMF EULA — owner pays the Open Source Maintenance Fee; build-time only, pinned in `global.json` `msbuild-sdks`; approved 2026-11-26, ADR 0010)
 - `System.CommandLine` (MIT; argument parsing for `irisaura-island.exe` and `IrisAura.Tools`; pin a stable 2.x release ⚠ VERIFY current stable version)
 - **`netstandard2.0` targets only** (`IrisAura.Contracts`, `IrisAura.Island.Sdk`): `System.Text.Json` (JSON is not built into netstandard2.0) and `System.Security.Principal.Windows` (current user SID for the SDK pipe name). .NET 10 projects use the in-box versions and must not reference these packages.
 
@@ -1312,6 +1313,7 @@ A solo developer should normally do 0A, then Island Phases 1–5, and fit 0B/0C 
   - Replies are errors and query answers only, in order; clients confirm with `query`. Protocol additions: `hello`, `query`/`activities`, `error` codes (docs/ISLAND_SDK.md).
   - Client verification pins a thumbprint or a known publisher; a pinned development certificate is accepted without adding it to a trusted store. The production publisher is added in Phase 9.
   - The Release 1 gate (MSI, production signing, update verification) is open (KI-039).
+- **Release 1 notes (2026-11-26, ADR 0010):** WiX 7 per-machine MSI (self-contained ReadyToRun app + CLI on PATH, licence notices, HKLM Run key instead of a scheduled task, Restart Manager restart on upgrade), development-signed; offline update verification (signed manifest + hash + Authenticode signer). Install/upgrade/uninstall tested on DEV-01 (29/29). Still needed: production certificate + timestamp, independent SDK review, OSMF payment, a build on the latest .NET 10 servicing SDK, ARM64 MSI, and an update download/check (network, owner approval).
 
 ### Phase 6: IrisAura Face Lab — detection and recognition (2–4 weeks)
 

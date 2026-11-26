@@ -22,7 +22,8 @@ IrisAura is a Windows desktop product with two parts:
 [docs/ISLAND_SDK.md](docs/ISLAND_SDK.md). Built on the dashboard panel (Phase 4B: hover the Island for the media
 card, calendar strip, optional camera mirror and the file Tray), the system providers (Phase 4: volume, brightness,
 battery, Bluetooth, mic/camera dots, timers with **Ctrl+Alt+Shift+T**, downloads) and real media (Phase 3).
-Release 1 still needs the installer and production signing (Phase 9). Progress and test evidence are in
+**Release 1:** a per-machine MSI (`installer/IrisAura.Msi`, built with `scripts/build-release.ps1`) installs,
+upgrades and uninstalls cleanly; it is development-signed until the production code-signing certificate is bought. Progress and test evidence are in
 [docs/PROGRESS.md](docs/PROGRESS.md); the full plan is in [docs/BLUEPRINT.md](docs/BLUEPRINT.md).
 
 ### Trying the Island (development build)
@@ -61,7 +62,8 @@ assets/brand/              original logos (do not edit) + source SVGs
 docs/                      blueprint, decisions, progress, security and privacy docs
 samples/                   IrisAura.Island.SampleApp (Activity SDK example)
 scripts/                   build, brand-asset, dev-certificate and SDK end-to-end scripts
-models/  packaging/  installer/   placeholders for later phases
+installer/                 IrisAura.Msi (WiX per-machine installer for the Island)
+models/  packaging/        placeholders for later phases
 ```
 
 ## Building
